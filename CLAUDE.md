@@ -15,7 +15,7 @@ true on 2026-11-06. When a fact changes, change it here in the same commit.
 
 Nothing is built. The folder holds `PLAN.md` (the hand-over from the Cube Coach sessions: the idea,
 the open decisions, what to take from Cube Coach file by file, the design and test rules that carry
-over, the suggested build order) and this file. It is not a git repo yet. The GitHub repo exists:
+over, the suggested build order) and this file. Since 2026-11-06 it is a clone of the GitHub repo, with the local identity below; the build happens on branch `build`, merged to `main` when Max says so. The GitHub repo exists:
 https://github.com/MaxFokin/tic-tac-toe, public, branch `main`, created by Max on 2026-11-06 with
 only GitHub's one-line `README.md`; Pages is not on. No `package.json`, no sources, no tests.
 The design is written: `docs/superpowers/specs/2026-11-06-tic-tac-toe-coach-design.md`, from the
@@ -70,8 +70,7 @@ commands here when they exist.
 - Deployment, when it comes: `MaxFokin/tic-tac-toe` is already public with branch `main`; turn on
   GitHub Pages "Deploy from a branch" at the root, add `.nojekyll`, and every push goes live within
   a minute. Pages only works while the repo is public; its visibility is Max's call, never Claude
-  Code's. Before the first commit, make this folder a clone of that repo (`git init`, add the
-  remote, pull `main`) and set the local identity above.
+  Code's. This clone has the local identity set and `origin` pointing at it.
 
 ## Decisions
 
