@@ -267,20 +267,24 @@ Facts the tests guarantee:
 - The hint: from every reachable position, with either mark to move and either mark having
   started, it is a best square and its reason is true of it ("any" only when every empty square is
   best); a player who follows every hint never loses against any reply, as X and as O, first or
-  second.
+  second; the preference order is pinned on hand-made boards where a later reason is also true
+  (fork before stopFork, stopFork before corner, corner before any, any before side), and a side
+  square with nothing else true is the coach's `side` (the hint never reaches `side` in a
+  reachable position).
 - The coaches: Easy takes the win and the block when the dice say so and misses both when they
   don't; Medium always wins in one and always blocks; Hard plays a best square in every reachable
   position (so it never loses) and answers a corner with the middle.
 - The loss line: a missed win, a missed block and a fork on hand-made histories, and the general
-  line for a game the coach did not win.
+  line for a game the coach did not win (even after a missed win); a missed block beats a fork
+  played later; the child can be O.
 - Browser, in every language: `<html lang dir>` and the pressed segment follow the switch, the
+  board stays left-to-right (its direction, and square 0 left of square 2, in Hebrew too), the
   switch and the toggle share the header's right group, no Start over on welcome, the credits line
   (three links, the same words, order, font and direction, inside the screen on welcome); a
   2-player game where Help me shows O the block with the `2` line, a reload keeps the ring and the
-  line, any tap takes the ring away, X
-  wins with three ringed squares and confetti, a reload keeps the done screen, and Play again
-  starts the game just played even after the saved setup changed under it; following
-  Help me against Hard, as X starting and as O with the coach starting, three games each, always
+  line, any tap takes the ring away, X wins with three ringed squares and confetti, a reload keeps
+  the done screen, and Play again starts the game just played even after the saved setup changed
+  under it; following Help me against Hard, as X starting and as O with the coach starting, three games each, always
   ends in the handshake, never the grey day, and Play again starts on an empty board.
 - Browser, once: the welcome defaults; 2 players hides the coach rows and shows three how-to lines;
   the setup survives a reload and Start over; both welcome states fit 360x640; the toggle follows
@@ -352,7 +356,6 @@ every screen is within 23 px of these (English welcome 608), and the draw is the
   unquoted inside `howto2` and `boxStuck` in Hebrew and Polish, so those two must follow if
   `helpMe` changes.
 - The walk's heights only catch overflow (see Layout), and it runs with the fallback fonts.
-- No browser test checks that the board stays left-to-right in Hebrew; only the CSS pins it.
 - The browser floor: the game itself needs no more than Cube Coach does (no `Object.hasOwn`, no
   `?.`, and `.board` has an explicit height beside `aspect-ratio`, so it keeps its shape before
   Safari 15). Only the loss screen's grey mood needs CSS `:has()` (Safari 15.4, Chrome 105, both

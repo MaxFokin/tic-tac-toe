@@ -159,6 +159,9 @@ async def two_player_game(browser, code):
     page, errors = await new_page(browser)
     for sel in (f'.lang[data-lang="{code}"]', '#mode-two', '#play'): await tap(page, sel)
     for i in (0, 3, 1): await tap_cell(page, i)
+    assert await direction(page, '.board') == 'ltr', 'the board never mirrors'
+    left = "document.querySelector('.cell[data-i=\"{}\"]').getBoundingClientRect().left"
+    assert await page.evaluate(left.format(0)) < await page.evaluate(left.format(2)), 'square 0 is on the left in every language'
     await tap(page, '#help')
     assert await page.get_attribute('.cell.hint', 'data-i') == '2', 'Help me shows O the block'
     box = await text(page, '#box')

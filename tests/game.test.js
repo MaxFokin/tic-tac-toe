@@ -43,6 +43,13 @@ assert.deepStrictEqual(advise(['X','','O','','O','','','',''], 'X'), { square: 6
 assert.deepStrictEqual(advise(['X','','','','O','','','','X'], 'O').reason, 'twoInRow', 'a side that forces a block stops the fork');
 assert.strictEqual(reasonFor(['X','','','','','','','',''], 'O', 4), 'center');
 assert.strictEqual(reasonFor(['X','X','','','','','','',''], 'O', 2), 'block');
+// The preference order: on each board a later reason is also true of a best square, so a swap in REASONS fails here.
+const parse = (s) => s.split('').map((c) => (c === '.' ? '' : c));
+assert.deepStrictEqual(advise(parse('XOXO.....'), 'X'), { square: 4, reason: 'fork' }, 'fork before stopFork, center and corner');
+assert.deepStrictEqual(advise(parse('XO.....X.'), 'O'), { square: 6, reason: 'stopFork' }, 'stopFork before corner');
+assert.deepStrictEqual(advise(parse('X...O....'), 'X'), { square: 2, reason: 'corner' }, 'corner before any (every square draws here)');
+assert.deepStrictEqual(advise(parse('XOX.X.OXO'), 'O'), { square: 3, reason: 'any' }, 'any before side');
+assert.strictEqual(reasonFor(parse('X...O....'), 'X', 1), 'side', 'a side square with nothing else true is a side'); // advise never gets this far in a reachable position
 // Every reachable position, both marks to move, both starts: the hint is a best square, its reason is true, and following hints never loses.
 const seen = new Set();
 function walk(board, toMove, first) {
@@ -81,4 +88,7 @@ assert.strictEqual(lossReason(H('0 3 1 4 6 5'), 'X'), 'missedWin');   // X skipp
 assert.strictEqual(lossReason(H('0 4 8 2 1 6'), 'X'), 'missedBlock'); // X skipped 6
 assert.strictEqual(lossReason(H('1 4 7 0 8 6 2 3'), 'X'), 'fork');    // O's 6 made two ways
 assert.strictEqual(lossReason([], 'X'), 'general');
+assert.strictEqual(lossReason(H('0 4 8 1 2 5 7 3'), 'X'), 'missedBlock', 'a missed block beats a fork'); // X skipped 7, then O's 5 made two ways
+assert.strictEqual(lossReason(H('0 3 1 4 6 8 2'), 'X'), 'general', 'a missed win counts only when the coach won'); // X skipped 2, then won there
+assert.strictEqual(lossReason(H('0 4 1 6 2'), 'O'), 'missedBlock', 'the child can be O');                  // O skipped 2
 console.log('game: ok (loss)');
