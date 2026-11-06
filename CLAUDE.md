@@ -246,12 +246,14 @@ source .venv/bin/activate && npm run e2e   # Playwright: 21 checks, three in eac
 npm run screens                   # the eight screens' English text against tests/fixtures/en-screens.json, and their heights
 python3 tests/e2e/screens.py he   # the same walk in Hebrew (no Latin left) or Polish (pl: no English left)
 python3 tests/e2e/screens.py en --write   # refresh the snapshot, only after a copy change Max asked for
+python3 tests/e2e/screens.py en --fonts   # the walk with the web fonts, as on a phone (needs the internet; he, pl too)
 python3 tests/e2e/screenshots.py  # the README's phone screenshots into docs/screenshots (needs the internet for the fonts)
 ```
 
 Verified on 2026-11-06 with Node 26.6.0, npm 11.18.0, Python 3.9.6 and Playwright 1.60.0, whose
 Chromium build 1223 lives in `~/Library/Caches/ms-playwright`. The flows and the walks block the
-Google Fonts requests, so everything runs offline with the fallback fonts.
+Google Fonts requests, so everything runs offline with the fallback fonts; `screens.py --fonts`
+lets them through and waits for them.
 
 Facts the tests guarantee:
 - Strings: 68 keys, each in English, Hebrew and Polish with the same placeholders, no em dash, no
@@ -304,28 +306,29 @@ Facts the tests guarantee:
   and the hinted square's label says it is the coach's hint.
 - The walks (`screens.py`): the English text of the eight screens equals the snapshot; Hebrew
   screens hold no Latin word but the allowed names and X and O; Polish screens hold no English word
-  from the snapshot; every screen is at most 640 tall and 360 wide at 360x640, with the credits line
-  and no page error.
+  from the snapshot; every screen is at most 640 tall and 360 wide at 360x640, and so is its
+  content's real height, with the credits line and no page error.
 
-Layout at 360x640, measured on 2026-11-06. The walk's own number is `scrollHeight`, which never
-reads under the 640 viewport, so it is 640 on every screen in every language and only catches
-overflow. The content's real height (`#app` without its `min-height`, credits line included), with
-the web fonts:
+Layout at 360x640, measured on 2026-11-06 with `screens.py <lang> --fonts`. The walk prints two
+numbers per screen. The first is `scrollHeight`, which never reads under the 640 viewport, so it is
+640 on every screen in every language and only catches overflow. The second, in this table, is the
+content's real height (`#app` without its `min-height`, credits line included), with the web fonts;
+the walk fails if it is over 640 too:
 
 | Screen               | en  | he  | pl  |
 |----------------------|-----|-----|-----|
-| welcome              | 586 | 586 | 586 |
-| welcome 2 players    | 541 | 504 | 541 |
-| play start           | 576 | 576 | 599 |
-| play hint            | 599 | 576 | 576 |
-| play after coach     | 576 | 576 | 576 |
+| welcome              | 585 | 585 | 585 |
+| welcome 2 players    | 540 | 504 | 540 |
+| play start           | 575 | 575 | 599 |
+| play hint            | 599 | 575 | 575 |
+| play after coach     | 575 | 575 | 575 |
 | done win             | 551 | 551 | 551 |
-| done draw            | 623 | 623 | 623 |
-| done loss            | 575 | 575 | 598 |
+| done draw            | 622 | 622 | 622 |
+| done loss            | 574 | 574 | 597 |
 
-The 23 px steps are the box's line wrapping to two lines. With the fallback fonts the walks use,
-every screen is within 23 px of these (English welcome 608), and the draw is the tallest either way:
-17 px of room.
+The 23-24 px steps are the box's line wrapping to two lines. With the fallback fonts the default
+walks use, every screen is within 23 px of these (English welcome 607), and the draw is the tallest
+either way: 18 px of room.
 
 ## Deployment
 
@@ -355,7 +358,8 @@ every screen is within 23 px of these (English welcome 608), and the draw is the
   under right-to-left (fix the words, or isolate the hint); the Help me button's name sits
   unquoted inside `howto2` and `boxStuck` in Hebrew and Polish, so those two must follow if
   `helpMe` changes.
-- The walk's heights only catch overflow (see Layout), and it runs with the fallback fonts.
+- The default walks and the flows run with the fallback fonts; the web fonts are checked only when
+  someone runs `screens.py --fonts` (see Layout), which needs the internet.
 - The browser floor: the game itself needs no more than Cube Coach does (no `Object.hasOwn`, no
   `?.`, and `.board` has an explicit height beside `aspect-ratio`, so it keeps its shape before
   Safari 15). Only the loss screen's grey mood needs CSS `:has()` (Safari 15.4, Chrome 105, both

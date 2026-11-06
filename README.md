@@ -69,6 +69,7 @@ source .venv/bin/activate
 npm run e2e                       # the flows, in every language
 npm run screens                   # every screen's English text and height against a snapshot
 python3 tests/e2e/screens.py he   # the same walk in Hebrew (or pl)
+python3 tests/e2e/screens.py en --fonts   # the walk with the web fonts, as on a phone (needs the internet)
 python3 tests/e2e/screenshots.py  # refreshes the screenshots above (needs the internet for the fonts)
 ```
 
