@@ -20,5 +20,6 @@ let savedLang = null;
 try { savedLang = localStorage.getItem(LANG_KEY); } catch (e) { /* storage unavailable */ }
 applyLang(Object.keys(LANGS).includes(savedLang) ? savedLang : phoneLang());
 disarm();
+loadSetup();
 restore();
 render(false);

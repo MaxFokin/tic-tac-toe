@@ -6,11 +6,22 @@ const $ = (sel) => document.querySelector(sel);
 const appEl = $('#app'), panelEl = $('#panel'), restartBtn = $('#restart');
 
 // ===== State =====
-const app = { screen: 'welcome' };
+const app = { screen: 'welcome', setup: { mode: 'single', level: 'easy', mark: 'X', first: 'me' } };
 const KEY = 'ttt-coach-v1';
 const SETUP_KEY = 'ttt-coach-setup';
 function save() { /* Task 10 */ }
 function restore() { /* Task 10 */ }
+
+// The welcome screen's four choices, kept under their own key so Start over never touches them.
+const SETUP_CHOICES = { mode: ['single', 'two'], level: ['easy', 'medium', 'hard'], mark: ['X', 'O'], first: ['me', 'coach', 'random'] };
+function loadSetup() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(SETUP_KEY)); } catch (e) { /* storage unavailable or not JSON */ }
+  for (const k in SETUP_CHOICES) if (saved && SETUP_CHOICES[k].includes(saved[k])) app.setup[k] = saved[k];
+}
+function saveSetup() {
+  try { localStorage.setItem(SETUP_KEY, JSON.stringify(app.setup)); } catch (e) { /* storage unavailable */ }
+}
 
 // ===== Language =====
 // Kept under its own key, apart from the progress record, so Start over and restore() never touch it.
@@ -87,11 +98,54 @@ function go(screen) {
 function render(animate) {
   appEl.dataset.screen = app.screen;
   refreshChrome();
-  ({ welcome: screenWelcome }[app.screen] || screenWelcome)(animate);
+  ({ welcome: screenWelcome, play: screenPlay }[app.screen] || screenWelcome)(animate);
 }
 
+// The tile icons: the header's logo for Single player, a blue X beside an orange O for 2 players.
+const LOGO = $('.brand svg').outerHTML;
+const TWO_ICON = '<svg viewBox="0 0 100 60" aria-hidden="true"><path d="M12 12 40 48M40 12 12 48" stroke="#1F6FEB" stroke-width="11" stroke-linecap="round" fill="none"/><circle cx="74" cy="30" r="17" stroke="#FF8A1E" stroke-width="11" fill="none"/></svg>';
+const AGES = { easy: 'age5', medium: 'age8', hard: 'age10' };
+
+// Every choice is a button with one data-* attribute naming the setup key it sets.
 function screenWelcome() {
-  panelEl.innerHTML = `<h1>Tic-Tac-Toe Coach</h1>`;
+  const s = app.setup;
+  const press = (key, v) => `type="button" data-${key}="${v}" aria-pressed="${s[key] === v}"`;
+  const mode = (v, ico) => `<button class="tile" id="mode-${v}" ${press('mode', v)}><span class="ico">${ico}</span><strong>${t(v)}</strong></button>`;
+  const seg = (key, label, text) => `<div class="line"><span class="label">${t(label)}</span><div class="seg" role="group">${
+    SETUP_CHOICES[key].map((v) => `<button class="${key}" ${press(key, v)}>${text(v)}</button>`).join('')}</div></div>`;
+  const coachRows = `<div class="label">${t('coachLevel')}</div>
+    <div class="choose n3">${SETUP_CHOICES.level.map((v) => `<button class="tile level" ${press('level', v)}><strong>${t(v)}</strong><small>${t(AGES[v])}</small></button>`).join('')}</div>
+    ${seg('mark', 'youAre', (v) => v)}${seg('first', 'whoStarts', t)}`;
+  const howto = `<ul class="howto">${['x', 'o', 'yellow'].map((c, i) => `<li><b style="--c:var(--${c})">${i + 1}</b><span>${t('howto' + (i + 1))}</span></li>`).join('')}</ul>`;
+  panelEl.innerHTML = `<h1>${t('whoPlays')}</h1>
+    <div class="choose">${mode('single', LOGO)}${mode('two', TWO_ICON)}</div>
+    ${s.mode === 'single' ? coachRows : howto}
+    <div class="actions">${btn('play', t('play'), 'primary small')}</div>`;
+  panelEl.querySelectorAll('[aria-pressed]').forEach((b) => b.addEventListener('click', () => {
+    const [key, v] = Object.entries(b.dataset)[0];
+    app.setup[key] = v;
+    saveSetup();
+    render(false);
+  }));
+  on('play', startGame);
+}
+
+function startGame() {
+  const s = app.setup;
+  app.game = { ...s };
+  app.board = emptyBoard();
+  app.history = [];
+  app.hint = null;
+  app.result = null;
+  app.starter = s.mode === 'two' ? 'X' : s.first === 'me' ? s.mark : s.first === 'coach' ? other(s.mark) : pick(['X', 'O']);
+  app.turn = app.starter;
+  const drawn = s.mode === 'single' && s.first === 'random';
+  app.line = { key: drawn ? (app.starter === s.mark ? 'boxYouStart' : 'boxCoachStarts') : 'boxStuck' };
+  go('play');
+}
+
+function screenPlay() {
+  panelEl.innerHTML = `<h1>${t('yourTurn')}</h1>`;
 }
 
 function confetti() {

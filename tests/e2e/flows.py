@@ -1,6 +1,6 @@
 """Browser tests for the whole app, in the three languages the welcome switch offers.
 Needs the Playwright venv (README): source .venv/bin/activate && npm run e2e"""
-import asyncio, pathlib, re
+import asyncio, json, pathlib, re
 from playwright.async_api import async_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -9,7 +9,7 @@ LINKS = ['https://github.com/maxfokin/', 'https://www.linkedin.com/in/maxfokin/'
 VIEW = dict(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True)
 
 async def new_page(browser, init_script=None, **ctx_opts):
-    ctx = await browser.new_context(**VIEW, **ctx_opts)
+    ctx = await browser.new_context(**{**VIEW, **ctx_opts})
     if init_script: await ctx.add_init_script(init_script)
     page = await ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -20,7 +20,7 @@ async def new_page(browser, init_script=None, **ctx_opts):
 async def direction(page, sel):
     return await page.evaluate(f"getComputedStyle(document.querySelector('{sel}')).direction")
 
-async def check_credits(page, code):
+async def check_credits(page):
     assert await page.eval_on_selector_all('.credits a', 'els => els.map((a) => a.href)') == LINKS, 'the credits line links GitHub, LinkedIn and the repo, in that order'
     texts = await page.eval_on_selector_all('.credits a', 'els => els.map((a) => a.textContent.trim())')
     assert texts == ['@maxfokin', '@maxfokin', 'Source'], f'the credits line reads the same in every language: {texts}'
@@ -40,7 +40,7 @@ async def chrome(browser, code):
     assert await page.query_selector('.top .tools .langs') and await page.query_selector('.top .tools #theme'), 'the switch and the theme toggle share the top-right group'
     assert not await page.is_visible('#restart'), 'Start over leaves the header on the welcome screen'
     assert (await page.text_content(f'.lang[data-lang="{code}"]')).strip().endswith(code.upper()), 'each segment shows its code'
-    await check_credits(page, code)
+    await check_credits(page)
     assert not errors, errors
     print(f'chrome ({code}): ok')
     await page.context.close()
@@ -51,8 +51,51 @@ async def blocked_storage(browser):
     assert await page.get_attribute('html', 'lang') == 'he'
     await page.tap('#theme'); await page.wait_for_timeout(100)
     assert await page.get_attribute('html', 'data-theme') == 'dark', 'the toggle works without storage'
+    await page.tap('.level[data-level="hard"]'); await page.wait_for_timeout(100)
+    assert await pressed(page, '.level[data-level="hard"]'), 'a level can be picked without storage'
+    await page.tap('#play'); await page.wait_for_timeout(200)
+    assert await page.get_attribute('#app', 'data-screen') == 'play', 'Play works without storage'
     assert not errors, errors
     print('blocked storage: ok')
+    await page.context.close()
+
+async def pressed(page, sel):
+    return await page.get_attribute(sel, 'aria-pressed') == 'true'
+
+DEFAULTS = ('#mode-single', '.level[data-level="easy"]', '.mark[data-mark="X"]', '.first[data-first="me"]')
+PICKS = ('#mode-single', '.level[data-level="hard"]', '.mark[data-mark="O"]', '.first[data-first="random"]')
+
+async def welcome_setup(browser):
+    page, errors = await new_page(browser)
+    for sel in DEFAULTS:
+        assert await pressed(page, sel), f'{sel} is pressed on a fresh page'
+    await page.tap('#mode-two'); await page.wait_for_timeout(100)
+    assert await pressed(page, '#mode-two') and not await pressed(page, '#mode-single')
+    assert not await page.is_visible('.level'), '2 players hides the coach rows'
+    assert await page.locator('.howto li').count() == 3, '2 players shows three how-to lines'
+    for sel in PICKS:
+        await page.tap(sel); await page.wait_for_timeout(100)
+    await page.reload(); await page.wait_for_timeout(300)
+    for sel in PICKS:
+        assert await pressed(page, sel), f'{sel} is remembered after a reload'
+    saved = json.loads(await page.evaluate("localStorage.getItem('ttt-coach-setup')"))
+    assert saved == {'mode': 'single', 'level': 'hard', 'mark': 'O', 'first': 'random'}, saved
+    await page.tap('#play'); await page.wait_for_timeout(200)
+    assert await page.get_attribute('#app', 'data-screen') == 'play'
+    await page.tap('#restart'); await page.tap('#restart'); await page.wait_for_timeout(200)
+    assert await page.get_attribute('#app', 'data-screen') == 'welcome'
+    for sel in PICKS:
+        assert await pressed(page, sel), f'Start over keeps the setup: {sel}'
+    assert not errors, errors
+    await page.context.close()
+    # The smallest phone: both states fit 360 by 640 with the credits line, no scrolling.
+    page, errors = await new_page(browser, viewport={'width': 360, 'height': 640})
+    for mode in ('single', 'two'):
+        await page.tap(f'#mode-{mode}'); await page.wait_for_timeout(100)
+        height = await page.evaluate('document.documentElement.scrollHeight')
+        assert height <= 640, f'the welcome screen ({mode}) fits 640: {height}'
+    assert not errors, errors
+    print('welcome setup: ok')
     await page.context.close()
 
 async def locale_pick(browser):
@@ -106,6 +149,7 @@ async def main():
         codes = await page.eval_on_selector_all('.lang', 'els => els.map((e) => e.dataset.lang)')
         await page.context.close()
         assert codes == ['en', 'he', 'pl'], f'welcome switch offers {codes}'
+        await welcome_setup(browser)
         await theme_toggle(browser)
         await blocked_storage(browser)
         await locale_pick(browser)

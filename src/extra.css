@@ -1,12 +1,12 @@
 /* Choice tiles */
 .choose { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 2px; }
 .tile {
-  appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 8px; padding: 16px 10px 14px;
+  appearance: none; cursor: pointer; display: grid; justify-items: center; align-content: center; gap: 8px; padding: 16px 10px 14px;
   color: var(--ink); background: var(--paper); border: 3px solid var(--btn-border); border-radius: 20px;
   box-shadow: 0 6px 0 var(--frame); transition: transform .08s ease, box-shadow .08s ease; touch-action: manipulation;
 }
 .tile:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--frame); }
-.tile strong { font: 600 28px/1 var(--display); letter-spacing: -0.01em; }
+.tile strong { font: 600 22px/1 var(--display); letter-spacing: -0.01em; }
 .tile small { font: 400 15px/1.2 var(--text); color: var(--ink-soft); }
 
 /* Header tools, top right: the language switch (welcome screen only, where Start over is away)
@@ -43,3 +43,28 @@
 .credits a:hover { color: var(--ink); }
 .credits svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
 .credits .dot { opacity: .45; }
+
+/* Welcome: who plays, the coach's level, your mark, who starts */
+.choose.n3 { grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.choose.n3 .tile { padding: 12px 6px 10px; gap: 4px; }
+.choose.n3 .tile small { font-size: 13px; }
+.tile[aria-pressed="true"] { border-color: var(--coach); box-shadow: 0 6px 0 var(--coach); }
+.tile .ico { width: 56px; height: 56px; display: grid; place-items: center; }
+.tile .ico svg { width: 100%; border-radius: 13px; }
+.label { font: 500 15px/1.2 var(--display); color: var(--ink-soft); margin: 2px 0 -6px; }
+.line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.line .label { margin: 0; text-align: start; }
+.seg { display: flex; justify-content: center; }
+.seg button {
+  appearance: none; cursor: pointer; min-height: 44px; padding: 0 14px; margin-inline-start: -2px;
+  font: 600 17px/1 var(--display); color: var(--ink-soft); background: var(--paper);
+  border: 2px solid var(--line); border-radius: 0; touch-action: manipulation;
+}
+.seg button:first-child { margin-inline-start: 0; border-start-start-radius: 999px; border-end-start-radius: 999px; }
+.seg button:last-child { border-start-end-radius: 999px; border-end-end-radius: 999px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); position: relative; z-index: 1; }
+.seg .mark[data-mark="X"] { color: var(--x); }
+.seg .mark[data-mark="O"] { color: var(--o); }
+.seg .mark[data-mark="X"][aria-pressed="true"] { background: var(--x); border-color: var(--x); color: #fff; }
+.seg .mark[data-mark="O"][aria-pressed="true"] { background: var(--o); border-color: var(--o); color: #fff; }
+.btn.small { flex: none; min-width: 170px; min-height: 50px; margin: 0 auto; padding: 10px 28px; }
