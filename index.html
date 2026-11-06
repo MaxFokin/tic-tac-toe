@@ -215,7 +215,7 @@ h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spa
 h1 b.x, .sub b.x { color: var(--x); }
 h1 b.o, .sub b.o { color: var(--o); }
 .board {
-  width: min(72vw, 250px); aspect-ratio: 1; margin: 0 auto; padding: 10px;
+  width: min(72vw, 250px); height: min(72vw, 250px); aspect-ratio: 1; /* the height for Safari before 15 */ margin: 0 auto; padding: 10px;
   display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 8px;
   background: #0D0E12; border-radius: 24px; box-shadow: 0 7px 0 rgba(13, 14, 18, .22);
 }
@@ -241,7 +241,7 @@ h1 b.o, .sub b.o { color: var(--o); }
 .cell:disabled { cursor: default; }
 .handshake { align-self: center; font-size: 64px; line-height: 1; margin: -4px 0 -2px; transform-origin: 50% 60%; animation: shake .7s ease-in-out 3; }
 @keyframes shake { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
-#app[data-screen="done"] .handshake + .board { width: min(64vw, 230px); }
+#app[data-screen="done"] .handshake + .board { width: min(64vw, 230px); height: min(64vw, 230px); }
 /* The grey day reaches the body, outside #app, so the tokens are set on the root. */
 :root:has(#app[data-mood="sad"]) { --desk: #DFE3EA; --paper: #F1F3F7; --ink: #3A3F4C; --ink-soft: #7A8294; }
 @media (prefers-color-scheme: dark) {
@@ -324,7 +324,7 @@ function bestSquares(board, mark) {
   return values.filter((m) => m.value === top).map((m) => m.square);
 }
 // Empty squares where `mark` completes three.
-const threats = (board, mark) => empties(board).filter((i) => winner(play(board, i, mark))?.mark === mark);
+const threats = (board, mark) => empties(board).filter((i) => (winner(play(board, i, mark)) || {}).mark === mark);
 // Empty squares where playing `mark` leaves two or more threats (a square that wins outright is not a fork).
 const forkSquares = (board, mark) =>
   empties(board).filter((i) => !winner(play(board, i, mark)) && threats(play(board, i, mark), mark).length >= 2);
@@ -390,7 +390,7 @@ function lossReason(history, childMark) {
     } else if (forkSquares(board, mark).includes(square)) seen.add('fork');
     board = play(board, square, mark);
   }
-  if (winner(board)?.mark !== coach) return 'general';
+  if ((winner(board) || {}).mark !== coach) return 'general';
   return ['missedWin', 'missedBlock', 'fork'].find((r) => seen.has(r)) || 'general';
 }
 // ===== Words, in every language =====
@@ -767,6 +767,8 @@ const STICKERS = ['#1FAD5C', '#FFD43B', '#D7263D', '#FF8A1E', '#1F6FEB', '#F6F6F
 const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 const $ = (sel) => document.querySelector(sel);
+// Object.hasOwn and ?. need Safari 15.4 and 13.4; the app runs wherever Cube Coach runs.
+const hasKey = (k) => Object.prototype.hasOwnProperty.call(STRINGS, k);
 const appEl = $('#app'), panelEl = $('#panel'), restartBtn = $('#restart');
 
 // ===== State =====
@@ -799,7 +801,7 @@ function restore() {
   const result = over ? { winner: w ? w.mark : null, line: w ? w.line : null } : null;
   if (over !== (d.screen === 'done') || JSON.stringify(d.result) !== JSON.stringify(result)) return;
   const line = d.line;
-  if (!line || typeof line.key !== 'string' || !Object.hasOwn(STRINGS, line.key)) return;
+  if (!line || typeof line.key !== 'string' || !hasKey(line.key)) return;
   if (line.vars !== undefined && !['X', 'O'].includes(line.vars && line.vars.mark)) return; // the only vars a line has
   Object.assign(app, { screen: d.screen, game: d.game, board, turn: mark, starter: d.starter, history: d.history, line, result, hint: null, last: null });
 }
@@ -993,8 +995,8 @@ function askHelp() {
 // (the coach's 'win' ends the game) keeps the box as it is.
 function sayReason(prefix, reason) {
   const key = reason && prefix + reason[0].toUpperCase() + reason.slice(1);
-  if (!key || !Object.hasOwn(STRINGS, key)) return;
-  const two = app.game.mode === 'two' && Object.hasOwn(STRINGS, key + '2');
+  if (!key || !hasKey(key)) return;
+  const two = app.game.mode === 'two' && hasKey(key + '2');
   app.line = two ? { key: key + '2', vars: { mark: other(app.turn) } } : { key };
 }
 

@@ -3,6 +3,8 @@ const STICKERS = ['#1FAD5C', '#FFD43B', '#D7263D', '#FF8A1E', '#1F6FEB', '#F6F6F
 const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 const $ = (sel) => document.querySelector(sel);
+// Object.hasOwn and ?. need Safari 15.4 and 13.4; the app runs wherever Cube Coach runs.
+const hasKey = (k) => Object.prototype.hasOwnProperty.call(STRINGS, k);
 const appEl = $('#app'), panelEl = $('#panel'), restartBtn = $('#restart');
 
 // ===== State =====
@@ -35,7 +37,7 @@ function restore() {
   const result = over ? { winner: w ? w.mark : null, line: w ? w.line : null } : null;
   if (over !== (d.screen === 'done') || JSON.stringify(d.result) !== JSON.stringify(result)) return;
   const line = d.line;
-  if (!line || typeof line.key !== 'string' || !Object.hasOwn(STRINGS, line.key)) return;
+  if (!line || typeof line.key !== 'string' || !hasKey(line.key)) return;
   if (line.vars !== undefined && !['X', 'O'].includes(line.vars && line.vars.mark)) return; // the only vars a line has
   Object.assign(app, { screen: d.screen, game: d.game, board, turn: mark, starter: d.starter, history: d.history, line, result, hint: null, last: null });
 }
@@ -229,8 +231,8 @@ function askHelp() {
 // (the coach's 'win' ends the game) keeps the box as it is.
 function sayReason(prefix, reason) {
   const key = reason && prefix + reason[0].toUpperCase() + reason.slice(1);
-  if (!key || !Object.hasOwn(STRINGS, key)) return;
-  const two = app.game.mode === 'two' && Object.hasOwn(STRINGS, key + '2');
+  if (!key || !hasKey(key)) return;
+  const two = app.game.mode === 'two' && hasKey(key + '2');
   app.line = two ? { key: key + '2', vars: { mark: other(app.turn) } } : { key };
 }
 

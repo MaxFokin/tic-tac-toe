@@ -75,7 +75,7 @@
 h1 b.x, .sub b.x { color: var(--x); }
 h1 b.o, .sub b.o { color: var(--o); }
 .board {
-  width: min(72vw, 250px); aspect-ratio: 1; margin: 0 auto; padding: 10px;
+  width: min(72vw, 250px); height: min(72vw, 250px); aspect-ratio: 1; /* the height for Safari before 15 */ margin: 0 auto; padding: 10px;
   display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 8px;
   background: #0D0E12; border-radius: 24px; box-shadow: 0 7px 0 rgba(13, 14, 18, .22);
 }
@@ -101,7 +101,7 @@ h1 b.o, .sub b.o { color: var(--o); }
 .cell:disabled { cursor: default; }
 .handshake { align-self: center; font-size: 64px; line-height: 1; margin: -4px 0 -2px; transform-origin: 50% 60%; animation: shake .7s ease-in-out 3; }
 @keyframes shake { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
-#app[data-screen="done"] .handshake + .board { width: min(64vw, 230px); }
+#app[data-screen="done"] .handshake + .board { width: min(64vw, 230px); height: min(64vw, 230px); }
 /* The grey day reaches the body, outside #app, so the tokens are set on the root. */
 :root:has(#app[data-mood="sad"]) { --desk: #DFE3EA; --paper: #F1F3F7; --ink: #3A3F4C; --ink-soft: #7A8294; }
 @media (prefers-color-scheme: dark) {

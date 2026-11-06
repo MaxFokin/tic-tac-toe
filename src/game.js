@@ -40,7 +40,7 @@ function bestSquares(board, mark) {
   return values.filter((m) => m.value === top).map((m) => m.square);
 }
 // Empty squares where `mark` completes three.
-const threats = (board, mark) => empties(board).filter((i) => winner(play(board, i, mark))?.mark === mark);
+const threats = (board, mark) => empties(board).filter((i) => (winner(play(board, i, mark)) || {}).mark === mark);
 // Empty squares where playing `mark` leaves two or more threats (a square that wins outright is not a fork).
 const forkSquares = (board, mark) =>
   empties(board).filter((i) => !winner(play(board, i, mark)) && threats(play(board, i, mark), mark).length >= 2);
@@ -106,6 +106,6 @@ function lossReason(history, childMark) {
     } else if (forkSquares(board, mark).includes(square)) seen.add('fork');
     board = play(board, square, mark);
   }
-  if (winner(board)?.mark !== coach) return 'general';
+  if ((winner(board) || {}).mark !== coach) return 'general';
   return ['missedWin', 'missedBlock', 'fork'].find((r) => seen.has(r)) || 'general';
 }

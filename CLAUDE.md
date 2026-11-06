@@ -341,8 +341,10 @@ every screen is within 23 px of these (English welcome 608), and the draw is the
   `helpMe` changes.
 - The walk's heights only catch overflow (see Layout), and it runs with the fallback fonts.
 - No browser test checks that the board stays left-to-right in Hebrew; only the CSS pins it.
-- The grey day needs CSS `:has()` (Chrome 105, Safari 15.4, both 2022); an older browser shows the
-  loss in normal colors.
+- The browser floor: the game itself needs no more than Cube Coach does (no `Object.hasOwn`, no
+  `?.`, and `.board` has an explicit height beside `aspect-ratio`, so it keeps its shape before
+  Safari 15). Only the loss screen's grey mood needs CSS `:has()` (Safari 15.4, Chrome 105, both
+  2022); an older browser shows the loss in normal colors. Never checked on an old device.
 - After the child's move, the hint line (and the magenta border) stays in the box through the
   coach's 700 ms wait, until the coach's line replaces it. The spec is silent; for Max to notice.
 - Every welcome choice redraws the screen, so the focus is lost after each tap (keyboard and screen
