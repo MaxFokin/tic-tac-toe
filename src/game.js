@@ -73,3 +73,21 @@ function advise(board, mark) {
     if (square !== undefined) return { square, reason };
   }
 }
+
+// ----- The three coaches -----
+// ponytail: knobs, tune after Max's son has played
+const EASY_WIN = 0.5;
+const EASY_BLOCK = 0.5;
+let random = Math.random;
+const useRandom = (fn) => { random = fn; };
+const pick = (list) => list[Math.floor(random() * list.length)];
+// The square for `mark` at `level` ('easy', 'medium' or 'hard') and the reason that is true of it.
+function coachMove(board, mark, level) {
+  const wins = threats(board, mark), blocks = threats(board, other(mark));
+  let square;
+  if (level === 'hard') square = pick(bestSquares(board, mark));
+  else if (wins.length && (level === 'medium' || random() < EASY_WIN)) square = wins[0];
+  else if (blocks.length && (level === 'medium' || random() < EASY_BLOCK)) square = blocks[0];
+  else square = pick(empties(board));
+  return { square, reason: reasonFor(board, mark, square) };
+}

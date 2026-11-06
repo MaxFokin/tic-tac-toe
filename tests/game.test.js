@@ -60,3 +60,16 @@ function followNeverLoses(board, me, toMove) {
 }
 for (const me of ['X', 'O']) for (const first of ['X', 'O']) assert(followNeverLoses(emptyBoard(), me, first));
 console.log('game: ok (hints)');
+
+// ----- The three coaches -----
+const { coachMove, useRandom } = require('./load.js');
+const W = ['X','X','','O','O','','','','']; // X to move wins at 2; O to move wins at 5
+const B = ['O','O','','X','','','','','']; // X to move has no win and must block 2
+useRandom(() => 0); assert.strictEqual(coachMove(W, 'X', 'easy').square, 2, 'easy takes the win when the dice say so'); assert.strictEqual(coachMove(B, 'X', 'easy').square, 2, 'easy blocks when the dice say so');
+useRandom(() => 0.99); assert.notStrictEqual(coachMove(W, 'X', 'easy').square, 2, 'easy misses the win when the dice say so'); assert.notStrictEqual(coachMove(B, 'X', 'easy').square, 2, 'easy misses the block when the dice say so');
+useRandom(() => 0.99); assert.strictEqual(coachMove(W, 'O', 'medium').square, 5, 'medium always wins in one'); assert.strictEqual(coachMove(B, 'X', 'medium').square, 2, 'medium always blocks');
+let seed = 1; useRandom(() => (seed = (seed * 48271) % 2147483647) / 2147483647);
+for (const key of seen) { const board = key.slice(0, 9).split('').map((c) => (c === '.' ? '' : c)), m = key[9]; assert(bestSquares(board, m).includes(coachMove(board, m, 'hard').square), 'hard plays a best square'); }
+assert.strictEqual(coachMove(play(emptyBoard(), 0, 'X'), 'O', 'hard').reason, 'center');
+useRandom(Math.random);
+console.log('game: ok (levels)');
