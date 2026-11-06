@@ -91,3 +91,21 @@ function coachMove(board, mark, level) {
   else square = pick(empties(board));
   return { square, reason: reasonFor(board, mark, square) };
 }
+
+// ----- Why the child lost: the one thing the coach names after it wins -----
+// 'missedWin', 'missedBlock', 'fork' or 'general'. `history` is [{ mark, square }] from the empty board.
+function lossReason(history, childMark) {
+  const coach = other(childMark);
+  const seen = new Set();
+  let board = emptyBoard();
+  for (const { mark, square } of history) {
+    if (mark === childMark) {
+      const wins = threats(board, mark), blocks = threats(board, coach);
+      if (wins.length && !wins.includes(square)) seen.add('missedWin');
+      else if (blocks.length && !blocks.includes(square)) seen.add('missedBlock');
+    } else if (forkSquares(board, mark).includes(square)) seen.add('fork');
+    board = play(board, square, mark);
+  }
+  if (winner(board)?.mark !== coach) return 'general';
+  return ['missedWin', 'missedBlock', 'fork'].find((r) => seen.has(r)) || 'general';
+}

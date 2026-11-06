@@ -73,3 +73,12 @@ for (const key of seen) { const board = key.slice(0, 9).split('').map((c) => (c 
 assert.strictEqual(coachMove(play(emptyBoard(), 0, 'X'), 'O', 'hard').reason, 'center');
 useRandom(Math.random);
 console.log('game: ok (levels)');
+
+// ----- Why the child lost -----
+const { lossReason } = require('./load.js');
+const H = (s) => s.split(' ').map((t, i) => ({ mark: i % 2 ? 'O' : 'X', square: +t }));
+assert.strictEqual(lossReason(H('0 3 1 4 6 5'), 'X'), 'missedWin');   // X skipped 2
+assert.strictEqual(lossReason(H('0 4 8 2 1 6'), 'X'), 'missedBlock'); // X skipped 6
+assert.strictEqual(lossReason(H('1 4 7 0 8 6 2 3'), 'X'), 'fork');    // O's 6 made two ways
+assert.strictEqual(lossReason([], 'X'), 'general');
+console.log('game: ok (loss)');
