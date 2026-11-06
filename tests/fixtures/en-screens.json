@@ -1,0 +1,34 @@
+{
+ "welcome": {
+  "text": "Who plays?\nSingle player\n2 players\nHow good is the coach?\nEasy\nage 5\nMedium\nage 8\nHard\nage 10+\nYou are\nX\nO\nWho starts?\nMe\nCoach\nRandom\nPlay\nStart over",
+  "height": 640
+ },
+ "welcome 2 players": {
+  "text": "Who plays?\nSingle player\n2 players\n1\nTake turns on this phone. X starts.\n2\nStuck? Tap Help me. The coach shows you.\n3\nThree in a row wins!\nPlay\nStart over",
+  "height": 640
+ },
+ "play start": {
+  "text": "Your turn\nYou are X\nStuck? Tap Help me.\nHelp me\nStart over",
+  "height": 640
+ },
+ "play hint": {
+  "text": "Your turn\nYou are X\nTake the middle. It’s the best square.\nHelp me\nStart over",
+  "height": 640
+ },
+ "play after coach": {
+  "text": "Your turn\nYou are X\nI blocked you.\nHelp me\nStart over",
+  "height": 640
+ },
+ "done win": {
+  "text": "X wins!\nThree in a row. Well done!\nPlay again\nStart over",
+  "height": 640
+ },
+ "done draw": {
+  "text": "It’s a draw!\n🤝\nNobody beats the Hard coach. A draw is as good as it gets!\nPlay again\nStart over",
+  "height": 640
+ },
+ "done loss": {
+  "text": "Oh no…\n🌧️\nYou could have blocked me. Next time, look at my two in a row.\nPlay again\nStart over",
+  "height": 640
+ }
+}
