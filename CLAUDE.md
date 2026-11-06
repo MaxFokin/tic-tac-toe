@@ -156,8 +156,8 @@ two or more threats (a square that wins outright is not a fork).
 Levels (`coachMove(board, mark, level)`, which returns the square and its reason):
 - Easy: takes a win in one with probability `EASY_WIN`, else blocks one with `EASY_BLOCK`, else a
   random empty square. Both are 0.5, marked `ponytail:` as knobs to tune after Max's son has played.
-- Medium: always wins in one, always blocks, else a random empty square; it never forks and can be
-  forked.
+- Medium: always wins in one, always blocks, else a random empty square; it never looks for a fork
+  (its random square can happen to be one) and can be forked.
 - Hard: a random one of the best squares; it never loses.
 Easy and Medium take the lowest winning or blocking square when there are two. `random` sits
 behind `useRandom(fn)` so tests can seed it; `ui.js` also uses `pick` for the Random starter and
@@ -242,7 +242,7 @@ grid in white on black with the middle square in magenta.
 python3 build.py --check          # index.html matches src/
 npm test                          # Node: strings, then game (board, search, hints, levels, loss)
 python3 -m venv .venv && .venv/bin/pip install playwright==1.60.0 && .venv/bin/playwright install chromium
-source .venv/bin/activate && npm run e2e   # Playwright: 21 checks, three in each language and twelve once (about 2 minutes)
+source .venv/bin/activate && npm run e2e   # Playwright: 23 checks, three in each language and fourteen once (about 2 minutes)
 npm run screens                   # the eight screens' English text against tests/fixtures/en-screens.json, and their heights
 python3 tests/e2e/screens.py he   # the same walk in Hebrew (no Latin left) or Polish (pl: no English left)
 python3 tests/e2e/screens.py en --write   # refresh the snapshot, only after a copy change Max asked for
@@ -408,6 +408,13 @@ the spec, `docs/superpowers/specs/2026-11-06-tic-tac-toe-coach-design.md`):
 11. The play and end screens from six mockup moments, with Max's confetti of X's and O's, the
     handshake on a draw and the grey day on a loss. See the spec.
 
+Made on 2026-11-06 after the final review of the build:
+
+12. A reload brings the hint ring back with its line (recomputed by `advise`), instead of the spec's
+    "the hint ring is not saved".
+13. The app runs wherever Cube Coach runs: no `Object.hasOwn`, no `?.`, an explicit board height.
+    Only the grey mood needs `:has()`.
+
 ## History
 
 - 2026-11-04 to 2026-11-06: `PLAN.md` written at the end of the Cube Coach sessions, before anything
@@ -430,5 +437,9 @@ the spec, `docs/superpowers/specs/2026-11-06-tic-tac-toe-coach-design.md`):
   10. `18e8705` The play screen: the board, the coach's moves, Help me.
   11. `44bcb04` The end of a game: the win, the handshake, the grey day.
   12. `e87becb` Every screen measured in three languages; README with phone screenshots.
-  13. CLAUDE.md as the project's memory. Still to do with Max: the review of the Hebrew and
-      Polish, the floorplan, going live.
+  13. `354dee3` CLAUDE.md as the project's memory. Still to do with Max: the review of the Hebrew
+      and Polish, the floorplan, going live.
+- 2026-11-06: the final review's fix wave, on `build`: `85cfed9` the portability fixes, `08f6f94`
+  the hint ring on reload, `bf8fe47` the focus, the live box, the hint's label and Play again,
+  `dd1ec0e` the tests (the board's direction, the hint's order, the loss line), `84cce12`
+  `screens.py --fonts` and the layout table, then this file's nits and history.
