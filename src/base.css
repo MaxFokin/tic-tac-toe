@@ -1,0 +1,128 @@
+
+:root {
+  --desk: #EDF0F5;
+  --paper: #FFFFFF;
+  --ink: #17191F;
+  --ink-soft: #596173;
+  --line: #D3D9E3;
+  --frame: #17191F;
+  --btn-border: #17191F;
+  --yellow: #FFD23F;
+  --x: #1F6FEB;
+  --o: #FF8A1E;
+  --coach: #E0337F;
+  --coach-soft: rgba(224, 51, 127, .30);
+  --display: 'Fredoka', ui-rounded, 'Arial Rounded MT Bold', 'Nunito', system-ui, sans-serif;
+  --text: 'Andika', 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #0F1218; --paper: #1A1E27; --ink: #EEF1F6; --ink-soft: #A2AABA; --line: #2C3240;
+    --frame: #05060A; --btn-border: #3A4152;
+    --coach: #FF4D9A; --coach-soft: rgba(255, 77, 154, .32); --x: #1F6FEB; --o: #FF8A1E;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #0F1218; --paper: #1A1E27; --ink: #EEF1F6; --ink-soft: #A2AABA; --line: #2C3240;
+  --frame: #05060A; --btn-border: #3A4152;
+  --coach: #FF4D9A; --coach-soft: rgba(255, 77, 154, .32); --x: #1F6FEB; --o: #FF8A1E;
+  color-scheme: dark;
+}
+/* Hebrew text: Andika has no Hebrew glyphs, Fredoka (the display font) does. */
+:root[lang="he"] { --text: 'Assistant', 'Arial Hebrew', system-ui, sans-serif; }
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0; min-height: 100%;
+  background: var(--desk); color: var(--ink);
+  font: 400 18px/1.45 var(--text);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+  overflow-x: clip;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--coach); outline-offset: 3px; }
+
+.app {
+  max-width: 520px; margin: 0 auto; padding: 8px 18px 28px; display: flex; flex-direction: column;
+  min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+.top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; min-height: 52px; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 600 21px/1 var(--display); letter-spacing: -0.01em; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.brand .name { display: grid; gap: 2px; text-align: left; }
+.brand .name b { font-size: 19px; line-height: 1; }
+.brand .name small { font: 600 11px/1 var(--display); letter-spacing: .08em; color: var(--ink-soft); }
+.brand svg { width: 28px; height: 28px; border-radius: 8px; flex: none; }
+.restart {
+  appearance: none; cursor: pointer; background: transparent; color: var(--ink-soft);
+  border: 2px solid var(--line); border-radius: 12px; padding: 7px 12px;
+  font: 500 15px/1 var(--display); touch-action: manipulation;
+}
+.restart.armed { color: var(--ink); border-color: var(--coach); }
+.app[data-screen="welcome"] .restart { display: none; }
+
+/* Panel */
+.panel { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; padding-top: 2px; }
+h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.lead { margin: 0 auto; max-width: 31ch; color: var(--ink-soft); text-wrap: pretty; }
+.note { margin: 0 auto; max-width: 31ch; font-size: 16px; color: var(--ink); background: var(--paper); border: 2px solid var(--line); border-radius: 14px; padding: 8px 14px; }
+
+/* Buttons */
+.actions { display: flex; gap: 12px; margin-top: 4px; }
+.btn {
+  flex: 1; appearance: none; cursor: pointer; min-height: 58px; padding: 14px 16px;
+  font: 600 19px/1.1 var(--display); color: var(--ink); background: var(--paper);
+  border: 3px solid var(--btn-border); border-radius: 16px; box-shadow: 0 5px 0 var(--frame);
+  transition: transform .08s ease, box-shadow .08s ease, opacity .2s ease; touch-action: manipulation;
+}
+.btn.primary { background: var(--yellow); color: #17191F; border-color: #17191F; box-shadow: 0 5px 0 #17191F; }
+.btn.wide { flex: 2; }
+.btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--frame); }
+.btn.primary:active:not(:disabled) { box-shadow: 0 1px 0 #17191F; }
+.btn:disabled { opacity: .4; cursor: default; }
+.textlink {
+  appearance: none; align-self: center; background: none; border: 0; padding: 6px 8px; cursor: pointer;
+  color: var(--ink-soft); font: 400 16px/1.3 var(--text); text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* Welcome steps */
+.howto { list-style: none; margin: 0 auto; padding: 0; display: grid; gap: 10px; text-align: start; max-width: 330px; }
+.howto li { display: flex; align-items: center; gap: 12px; }
+.howto b {
+  flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+  font: 600 18px/1 var(--display); color: #17191F; background: var(--c); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .14);
+}
+
+/* Confetti */
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
+.confetti i {
+  position: absolute; top: -24px; width: 11px; height: 11px; border-radius: 3px; background: var(--c);
+  animation: fall var(--t) cubic-bezier(.25, .6, .45, 1) var(--d) forwards;
+}
+@keyframes fall { to { transform: translate3d(var(--x), 112vh, 0) rotate(var(--r)); } }
+
+/* Right to left: words follow the language; the header, the board and the credits never mirror */
+.top, .board, .langs, .credits { direction: ltr; }
+
+@media (max-width: 360px) {
+  .app { padding-left: 14px; padding-right: 14px; }
+  .btn { font-size: 17px; }
+}
+@media (max-height: 720px) {
+  .panel { gap: 10px; }
+  h1 { font-size: 24px; }
+  .lead { font-size: 16px; max-width: 38ch; }
+  .btn { min-height: 52px; padding: 11px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti i { animation-duration: .01s !important; }
+}

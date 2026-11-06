@@ -1,0 +1,1 @@
+{ "name": "tic-tac-toe-coach", "private": true, "scripts": { "build": "python3 build.py", "check": "python3 build.py --check", "test": "node tests/run.js", "e2e": "python3 tests/e2e/flows.py", "screens": "python3 tests/e2e/screens.py en" } }
