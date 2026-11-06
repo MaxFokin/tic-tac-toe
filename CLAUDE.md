@@ -117,8 +117,11 @@ switch and the theme toggle's label) and draws the screen.
 The welcome screen's four choices are saved under `ttt-coach-setup` the moment one changes;
 `loadSetup()` takes only known values. The first time: Single player, Easy, X, Me. The game is
 saved under `ttt-coach-v1` on every change (screen, game, board, turn, starter, history, line,
-result), so a reload lands on the same board and turn; the hint ring and the coach's ring are not
-saved. `restore()` takes a record only when the history replays from the empty board to the board,
+result), so a reload lands on the same board and turn. The rings are not saved: `restore()` draws
+the hint ring again when the line is a hint on the turn it was asked for (`advise` is deterministic,
+so it is the same square; a hint line left in the box through the coach's wait gets no ring), and
+the coach's ring is lost. This overrides the spec's "the hint ring is not saved" (2026-11-06, the
+final review: a "Put it here" with no ring points nowhere). `restore()` takes a record only when the history replays from the empty board to the board,
 the turn follows, the result is what the board says and the line is a known key; anything else
 leaves the app on welcome. Start over (shown on every screen but welcome; the first tap arms it for
 2.6 s, the second acts) drops the game and goes to welcome; the setup, the language and the theme
@@ -268,7 +271,8 @@ Facts the tests guarantee:
 - Browser, in every language: `<html lang dir>` and the pressed segment follow the switch, the
   switch and the toggle share the header's right group, no Start over on welcome, the credits line
   (three links, the same words, order, font and direction, inside the screen on welcome); a
-  2-player game where Help me shows O the block with the `2` line, any tap takes the ring away, X
+  2-player game where Help me shows O the block with the `2` line, a reload keeps the ring and the
+  line, any tap takes the ring away, X
   wins with three ringed squares and confetti, and a reload keeps the done screen; following
   Help me against Hard, as X starting and as O with the coach starting, three games each, always
   ends in the handshake, never the grey day, and Play again starts on an empty board.
@@ -282,7 +286,7 @@ Facts the tests guarantee:
   during the coach's wait are ignored; a Coach-first game shows "The coach’s turn" with Help me
   disabled, then the coach's line and "Your turn"; Random gives both "You start!" and "The coach
   starts." in twelve games; a malformed record, or one whose history does not replay, lands on
-  welcome; a loss (X on 0, 1, 3 against Hard) shows "Oh no…", the grey body, the cloud, the
+  welcome; a saved hint line on the coach's turn comes back with no ring; a loss (X on 0, 1, 3 against Hard) shows "Oh no…", the grey body, the cloud, the
   coach's three ringed and the missed-block line, and Start over brings the color back; under
   reduced motion there is no confetti and the handshake stands still; a win throws 90 pieces in more
   than one color.

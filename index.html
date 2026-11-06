@@ -776,7 +776,8 @@ const app = { screen: 'welcome', setup: { mode: 'single', level: 'easy', mark: '
 const KEY = 'ttt-coach-v1';
 const SETUP_KEY = 'ttt-coach-setup';
 // The game in progress, saved on every change: a reload lands on the same board and turn.
-// The hint ring and the coach's last-move ring are not saved.
+// The rings are not saved: restore() draws the hint ring again from the line (advise is
+// deterministic); the coach's last-move ring is lost.
 function save() {
   const { screen, game, board, turn, starter, history, line, result } = app;
   try { localStorage.setItem(KEY, JSON.stringify({ screen, game, board, turn, starter, history, line, result })); } catch (e) { /* storage unavailable */ }
@@ -803,7 +804,10 @@ function restore() {
   const line = d.line;
   if (!line || typeof line.key !== 'string' || !hasKey(line.key)) return;
   if (line.vars !== undefined && !['X', 'O'].includes(line.vars && line.vars.mark)) return; // the only vars a line has
-  Object.assign(app, { screen: d.screen, game: d.game, board, turn: mark, starter: d.starter, history: d.history, line, result, hint: null, last: null });
+  // A hint line names its square only with the ring. It stays in the box through the coach's wait,
+  // when the ring is gone, so it is drawn again only on the turn it was asked for.
+  const ringed = d.screen === 'play' && line.key.indexOf('hint') === 0 && (d.game.mode === 'two' || mark === d.game.mark);
+  Object.assign(app, { screen: d.screen, game: d.game, board, turn: mark, starter: d.starter, history: d.history, line, result, hint: ringed ? advise(board, mark).square : null, last: null });
 }
 
 // The welcome screen's four choices, kept under their own key so Start over never touches them.

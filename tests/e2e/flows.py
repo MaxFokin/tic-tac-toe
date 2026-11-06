@@ -165,6 +165,8 @@ async def two_player_game(browser, code):
     if code == 'en': assert box == 'Put it here, or X wins.', box
     if code == 'he': assert not LATIN.search(box), box
     if code == 'pl': assert box != 'Put it here, or X wins.', box
+    await page.reload(); await page.wait_for_timeout(300)
+    assert await page.get_attribute('.cell.hint', 'data-i') == '2' and await text(page, '#box') == box, 'a reload keeps the hint ring with its line'
     await tap_cell(page, 4)
     assert await count(page, '.cell.hint') == 0, 'a tap on any square takes the hint away'
     await tap_cell(page, 2)
@@ -242,6 +244,17 @@ async def garbage_record(browser):
         assert not errors, errors
         await page.context.close()
     print('garbage record: ok')
+
+# A hint line saved during the coach's wait (the child has played since Help me) gets no ring back.
+async def hint_on_coach_turn(browser):
+    record = {'screen': 'play', 'game': {'mode': 'single', 'level': 'hard', 'mark': 'X', 'first': 'me'},
+        'board': ['X', '', '', '', '', '', '', '', ''], 'turn': 'O', 'starter': 'X',
+        'history': [{'mark': 'X', 'square': 0}], 'line': {'key': 'hintCenter'}, 'result': None}
+    page, errors = await new_page(browser, f"localStorage.setItem('ttt-coach-v1', {json.dumps(json.dumps(record))})")
+    assert await page.get_attribute('#app', 'data-screen') == 'play' and await count(page, '.cell.hint') == 0, 'no hint ring on the coach’s turn'
+    assert not errors, errors
+    print('hint on coach turn: ok')
+    await page.context.close()
 
 # Follows Help me on every turn of the child's until the game ends; the coach's turns are waited out.
 async def follow_hints(page):
@@ -339,6 +352,7 @@ async def main():
         await coach_first(browser)
         await random_start(browser)
         await garbage_record(browser)
+        await hint_on_coach_turn(browser)
         await loss_screen(browser)
         await reduced_motion(browser)
         await win_confetti(browser)
