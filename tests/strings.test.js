@@ -4,6 +4,14 @@ const assert = require('assert');
 const { STRINGS, LANGS, t, useLang } = require('./load.js');
 const placeholders = (s) => new Set([...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]));
 const leaves = (v) => (typeof v === 'string' ? [v] : Object.values(v).flatMap(leaves));
+// Every word the screens and the coach need.
+for (const k of [
+  'whoPlays', 'single', 'two', 'coachLevel', 'easy', 'medium', 'hard', 'age5', 'age8', 'age10', 'youAre', 'whoStarts', 'me', 'coach', 'random', 'play', 'howto1', 'howto2', 'howto3',
+  'yourTurn', 'youAreMark', 'coachTurn', 'markTurn', 'tapSquare', 'helpMe', 'cellEmpty', 'cellMark', 'boxStuck', 'boxYouStart', 'boxCoachStarts',
+  'hintWin', 'hintBlock', 'hintBlock2', 'hintFork', 'hintTwoInRow', 'hintTwoInRow2', 'hintStopFork', 'hintStopFork2', 'hintCenter', 'hintCorner', 'hintSide', 'hintAny',
+  'coachBlock', 'coachFork', 'coachTwoInRow', 'coachStopFork', 'coachCenter', 'coachCorner', 'coachSide',
+  'youWin', 'markWins', 'drawTitle', 'lossTitle', 'winLine', 'drawHard', 'drawEasy', 'drawTwo', 'lossMissedWin', 'lossMissedBlock', 'lossFork', 'lossGeneral', 'playAgain',
+]) assert(STRINGS[k], k + ' exists');
 for (const [key, entry] of Object.entries(STRINGS)) {
   for (const code of Object.keys(LANGS)) assert(entry[code] !== undefined, `${key} lacks ${code}`);
   const want = placeholders(leaves(entry.en).join(' '));
