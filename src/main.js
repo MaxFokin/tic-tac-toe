@@ -10,6 +10,7 @@ restartBtn.addEventListener('click', () => {
     return;
   }
   disarm();
+  resetAll();
   go('welcome');
 });
 

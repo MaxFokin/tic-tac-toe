@@ -55,6 +55,8 @@ async def blocked_storage(browser):
     assert await pressed(page, '.level[data-level="hard"]'), 'a level can be picked without storage'
     await page.tap('#play'); await page.wait_for_timeout(200)
     assert await page.get_attribute('#app', 'data-screen') == 'play', 'Play works without storage'
+    await page.tap('.cell[data-i="0"]'); await page.wait_for_timeout(1000)
+    assert await page.locator('.cell.o').count() == 1, 'the coach moves without storage'
     assert not errors, errors
     print('blocked storage: ok')
     await page.context.close()
@@ -142,6 +144,105 @@ async def theme_toggle(browser):
     print('theme toggle: ok')
     await page.context.close()
 
+LATIN = re.compile(r'[A-WYZa-wyz]')  # any Latin letter but X and O
+async def count(page, sel): return await page.locator(sel).count()
+async def text(page, sel): return (await page.text_content(sel)).strip()
+async def tap(page, sel, wait=100):
+    await page.tap(sel); await page.wait_for_timeout(wait)
+async def tap_cell(page, i, wait=100): await tap(page, f'.cell[data-i="{i}"]', wait)
+async def single_hard_x(browser):
+    page, errors = await new_page(browser)
+    for sel in ('.level[data-level="hard"]', '#play'): await tap(page, sel)
+    return page, errors
+
+async def two_player_game(browser, code):
+    page, errors = await new_page(browser)
+    for sel in (f'.lang[data-lang="{code}"]', '#mode-two', '#play'): await tap(page, sel)
+    for i in (0, 3, 1): await tap_cell(page, i)
+    await tap(page, '#help')
+    assert await page.get_attribute('.cell.hint', 'data-i') == '2', 'Help me shows O the block'
+    box = await text(page, '#box')
+    if code == 'en': assert box == 'Put it here, or X wins.', box
+    if code == 'he': assert not LATIN.search(box), box
+    if code == 'pl': assert box != 'Put it here, or X wins.', box
+    await tap_cell(page, 4)
+    assert await count(page, '.cell.hint') == 0, 'a tap on any square takes the hint away'
+    await tap_cell(page, 2)
+    assert await page.get_attribute('#app', 'data-screen') == 'done'
+    if code == 'en': assert await text(page, '#title') == 'X wins!'
+    assert await count(page, '.cell.win') == 3
+    assert await count(page, '.confetti') == 1
+    await page.reload(); await page.wait_for_timeout(300)
+    assert await page.get_attribute('#app', 'data-screen') == 'done' and await count(page, '.cell.win') == 3, 'a reload keeps the end of the game'
+    assert not errors, errors
+    print(f'two player game ({code}): ok')
+    await page.context.close()
+
+async def coach_game_reload(browser):
+    page, errors = await single_hard_x(browser)
+    await tap_cell(page, 0, 1000)
+    assert await count(page, '.cell.o') == 1 and await count(page, '.cell.o.last[data-i="4"]') == 1, 'the hard coach takes the middle, ringed'
+    assert await text(page, '#box') == 'I took the middle.'
+    await page.reload(); await page.wait_for_timeout(300)
+    assert await count(page, '.cell.x[data-i="0"]') == 1 and await count(page, '.cell.o[data-i="4"]') == 1, 'a reload keeps the board'
+    assert await count(page, '.cell.x, .cell.o') == 2
+    assert await text(page, '#title') == 'Your turn'
+    await page.tap('.cell[data-i="1"]'); await page.reload(); await page.wait_for_timeout(1200)
+    assert await count(page, '.cell.o[data-i="2"]') == 1, 'the coach moves after a reload on its turn'
+    assert not errors, errors
+    print('coach game reload: ok')
+    await page.context.close()
+
+async def taken_and_busy(browser):
+    page, errors = await single_hard_x(browser)
+    await tap_cell(page, 0, 1000)
+    await tap_cell(page, 0)
+    assert await count(page, '.cell.x') == 1 and await count(page, '.cell.o') == 1, 'a taken square ignores the tap'
+    await page.tap('.cell[data-i="8"]'); await page.tap('.cell[data-i="6"]'); await page.wait_for_timeout(1000)
+    assert await count(page, '.cell.x') == 2 and await count(page, '.cell.o') == 2, 'a tap during the coach’s wait is ignored'
+    assert await count(page, '.cell.x[data-i="6"]') == 0
+    assert not errors, errors
+    print('taken and busy: ok')
+    await page.context.close()
+
+async def coach_first(browser):
+    page, errors = await new_page(browser)
+    for sel in ('.first[data-first="coach"]', '#play'): await tap(page, sel)
+    assert await text(page, '#title') == 'The coach’s turn'
+    assert await page.is_disabled('#help'), 'Help me waits for your turn'
+    await page.wait_for_timeout(1100)
+    assert await count(page, '.cell.o') == 1 and await count(page, '.cell.x') == 0
+    # The spec: "The coach starts." opens a Random game only; after its move the coach says its line.
+    assert await text(page, '#box') in ('I took the middle.', 'I took a corner.', 'I took a side square.'), await text(page, '#box')
+    assert await text(page, '#title') == 'Your turn'
+    assert not errors, errors
+    print('coach first: ok')
+    await page.context.close()
+
+async def random_start(browser):
+    page, errors = await new_page(browser)
+    await tap(page, '.first[data-first="random"]')
+    seen = set()
+    for _ in range(12):
+        await tap(page, '#play')
+        seen.add(await text(page, '#box'))
+        await page.tap('#restart'); await tap(page, '#restart')
+    assert {'You start!', 'The coach starts.'} <= seen, seen
+    assert not errors, errors
+    print('random start: ok')
+    await page.context.close()
+
+async def garbage_record(browser):
+    replay_mismatch = {'screen': 'play', 'game': {'mode': 'single', 'level': 'hard', 'mark': 'X', 'first': 'me'},
+        'board': ['X', '', '', '', 'O', '', '', '', ''], 'turn': 'X', 'starter': 'X',
+        'history': [{'mark': 'X', 'square': 1}, {'mark': 'O', 'square': 4}], 'line': {'key': 'boxStuck'}, 'result': None}
+    for record in ('{"screen":"play","board":[1,2,3]}', json.dumps(replay_mismatch)):
+        page, errors = await new_page(browser, f"localStorage.setItem('ttt-coach-v1', {json.dumps(record)})")
+        assert await page.get_attribute('#app', 'data-screen') == 'welcome', record
+        assert not errors, errors
+        await page.context.close()
+    print('garbage record: ok')
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -155,6 +256,12 @@ async def main():
         await locale_pick(browser)
         for code in codes:
             await chrome(browser, code)
+            await two_player_game(browser, code)
+        await coach_game_reload(browser)
+        await taken_and_busy(browser)
+        await coach_first(browser)
+        await random_start(browser)
+        await garbage_record(browser)
         await browser.close()
 
 asyncio.run(main())

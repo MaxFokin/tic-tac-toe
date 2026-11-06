@@ -74,7 +74,7 @@ button { font: inherit; color: inherit; }
 .panel { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; padding-top: 2px; }
 h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 .lead { margin: 0 auto; max-width: 31ch; color: var(--ink-soft); text-wrap: pretty; }
-.note { margin: 0 auto; max-width: 31ch; font-size: 16px; color: var(--ink); background: var(--paper); border: 2px solid var(--line); border-radius: 14px; padding: 8px 14px; }
+.note, .box { margin: 0 auto; max-width: 31ch; font-size: 16px; color: var(--ink); background: var(--paper); border: 2px solid var(--line); border-radius: 14px; padding: 8px 14px; }
 
 /* Buttons */
 .actions { display: flex; gap: 12px; margin-top: 4px; }
@@ -125,4 +125,5 @@ h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spa
 }
 @media (prefers-reduced-motion: reduce) {
   .confetti i { animation-duration: .01s !important; }
+  .cell.hint, .cell.pop { animation: none; }
 }

@@ -9,8 +9,36 @@ const appEl = $('#app'), panelEl = $('#panel'), restartBtn = $('#restart');
 const app = { screen: 'welcome', setup: { mode: 'single', level: 'easy', mark: 'X', first: 'me' } };
 const KEY = 'ttt-coach-v1';
 const SETUP_KEY = 'ttt-coach-setup';
-function save() { /* Task 10 */ }
-function restore() { /* Task 10 */ }
+// The game in progress, saved on every change: a reload lands on the same board and turn.
+// The hint ring and the coach's last-move ring are not saved.
+function save() {
+  const { screen, game, board, turn, starter, history, line, result } = app;
+  try { localStorage.setItem(KEY, JSON.stringify({ screen, game, board, turn, starter, history, line, result })); } catch (e) { /* storage unavailable */ }
+}
+// Takes a saved game only when every part agrees: the history replays from the empty board to the
+// board, the turn follows, the line is a known key and the result is what the board says.
+// Anything else leaves the app on welcome.
+function restore() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return; }
+  if (!d || !['play', 'done'].includes(d.screen) || !d.game || !Array.isArray(d.history) || !Array.isArray(d.board)) return;
+  if (Object.keys(SETUP_CHOICES).some((k) => !SETUP_CHOICES[k].includes(d.game[k])) || !['X', 'O'].includes(d.starter)) return;
+  if (d.board.length !== 9 || !d.board.every((c) => ['', 'X', 'O'].includes(c))) return;
+  let board = emptyBoard(), mark = d.starter;
+  for (const m of d.history) {
+    if (!m || m.mark !== mark || !Number.isInteger(m.square) || board[m.square] !== '' || winner(board)) return;
+    board = play(board, m.square, mark);
+    mark = other(mark);
+  }
+  if (board.join() !== d.board.join() || d.turn !== mark) return;
+  const w = winner(board), over = !!w || isFull(board);
+  const result = over ? { winner: w ? w.mark : null, line: w ? w.line : null } : null;
+  if (over !== (d.screen === 'done') || JSON.stringify(d.result) !== JSON.stringify(result)) return;
+  const line = d.line;
+  if (!line || typeof line.key !== 'string' || !Object.hasOwn(STRINGS, line.key)) return;
+  if (line.vars !== undefined && !['X', 'O'].includes(line.vars && line.vars.mark)) return; // the only vars a line has
+  Object.assign(app, { screen: d.screen, game: d.game, board, turn: mark, starter: d.starter, history: d.history, line, result, hint: null, last: null });
+}
 
 // The welcome screen's four choices, kept under their own key so Start over never touches them.
 const SETUP_CHOICES = { mode: ['single', 'two'], level: ['easy', 'medium', 'hard'], mark: ['X', 'O'], first: ['me', 'coach', 'random'] };
@@ -96,9 +124,10 @@ function go(screen) {
 }
 
 function render(animate) {
+  clearTimeout(coachTimer);
   appEl.dataset.screen = app.screen;
   refreshChrome();
-  ({ welcome: screenWelcome, play: screenPlay }[app.screen] || screenWelcome)(animate);
+  ({ welcome: screenWelcome, play: screenPlay, done: screenDone }[app.screen] || screenWelcome)(animate);
 }
 
 // The tile icons: the header's logo for Single player, a blue X beside an orange O for 2 players.
@@ -136,6 +165,7 @@ function startGame() {
   app.board = emptyBoard();
   app.history = [];
   app.hint = null;
+  app.last = null;
   app.result = null;
   app.starter = s.mode === 'two' ? 'X' : s.first === 'me' ? s.mark : s.first === 'coach' ? other(s.mark) : pick(['X', 'O']);
   app.turn = app.starter;
@@ -144,8 +174,109 @@ function startGame() {
   go('play');
 }
 
-function screenPlay() {
-  panelEl.innerHTML = `<h1>${t('yourTurn')}</h1>`;
+// ===== Play =====
+const COACH_WAIT = 700; // ms the coach waits before its move, so the move is seen as a move
+let coachTimer = null;
+const coachMark = () => other(app.game.mark);
+const isCoachTurn = () => app.game.mode === 'single' && app.turn === coachMark();
+
+// Start over: the game goes, the setup stays.
+function resetAll() {
+  clearTimeout(coachTimer);
+  for (const k of ['board', 'history', 'turn', 'starter', 'line', 'hint', 'last', 'result']) app[k] = null;
+}
+
+function tapCell(i) {
+  if (app.screen !== 'play' || isCoachTurn() || app.board[i] !== '') return;
+  placeMove(i, app.turn);
+}
+
+// The coach's square keeps the magenta ring until the child's next tap; any tap takes the hint away.
+function placeMove(i, mark) {
+  app.last = isCoachTurn() ? i : null;
+  app.board = play(app.board, i, mark);
+  app.history.push({ mark, square: i });
+  app.hint = null;
+  app.turn = other(mark); // even when the game ends: the turn always follows the moves, as restore() checks
+  if (winner(app.board) || isFull(app.board)) return finish();
+  if (app.game.mode === 'two') app.line = { key: 'boxStuck' };
+  save();
+  render(true); // screenPlay schedules the coach on its turn
+}
+
+// Runs from screenPlay on the coach's turn; render() clears the timer, so it never fires on a
+// stale screen or after the game is over.
+function scheduleCoach() {
+  clearTimeout(coachTimer);
+  coachTimer = setTimeout(() => {
+    const { square, reason } = coachMove(app.board, coachMark(), app.game.level);
+    sayReason('coach', reason);
+    placeMove(square, coachMark());
+  }, COACH_WAIT);
+}
+
+function askHelp() {
+  const { square, reason } = advise(app.board, app.turn);
+  app.hint = square;
+  sayReason('hint', reason);
+  save();
+  render(false);
+}
+
+// The box's line is 'hint' or 'coach' and the reason: hintBlock, coachCenter… In 2 players a hint
+// that names the other player takes its '2' form with that player's mark. A reason with no line
+// (the coach's 'win' ends the game) keeps the box as it is.
+function sayReason(prefix, reason) {
+  const key = reason && prefix + reason[0].toUpperCase() + reason.slice(1);
+  if (!key || !Object.hasOwn(STRINGS, key)) return;
+  const two = app.game.mode === 'two' && Object.hasOwn(STRINGS, key + '2');
+  app.line = two ? { key: key + '2', vars: { mark: other(app.turn) } } : { key };
+}
+
+function finish() {
+  const w = winner(app.board);
+  app.result = { winner: w ? w.mark : null, line: w ? w.line : null };
+  if (w && (app.game.mode === 'two' || w.mark === app.game.mark)) confetti();
+  go('done');
+}
+
+const MARK_SVG = {
+  X: '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M23 23 77 77M77 23 23 77"/></svg>',
+  O: '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="29"/></svg>',
+};
+const markHtml = (mark) => `<b class="${mark.toLowerCase()}">${mark}</b>`;
+
+// `ring(i)` is the extra classes of square i; the square of the latest move pops when `animate`.
+function boardHtml(ring, animate) {
+  const lastMove = app.history.length ? app.history[app.history.length - 1].square : -1;
+  return `<div class="board">${app.board.map((m, i) => {
+    const cls = ['cell', m.toLowerCase(), ring(i), animate && i === lastMove ? 'pop' : ''].filter(Boolean).join(' ');
+    const label = m ? t('cellMark', { n: i + 1, mark: m }) : t('cellEmpty', { n: i + 1 });
+    return `<button class="${cls}" type="button" data-i="${i}" aria-label="${label}">${MARK_SVG[m] || ''}</button>`;
+  }).join('')}</div>`;
+}
+const boxHtml = () => `<div class="box${/^(hint|coach)/.test(app.line.key) ? ' coach' : ''}" id="box">${t(app.line.key, app.line.vars)}</div>`;
+
+function screenPlay(animate) {
+  const single = app.game.mode === 'single';
+  const title = single ? t(isCoachTurn() ? 'coachTurn' : 'yourTurn') : t('markTurn', { mark: markHtml(app.turn) });
+  const sub = single ? t('youAreMark', { mark: markHtml(app.game.mark) }) : t('tapSquare');
+  const ring = (i) => (i === app.hint ? 'hint' : i === app.last ? 'last' : '');
+  panelEl.innerHTML = `<h1 id="title">${title}</h1><div class="sub" id="sub">${sub}</div>
+    ${boardHtml(ring, animate)}${boxHtml()}
+    <div class="actions">${btn('help', t('helpMe'), 'small')}</div>`;
+  panelEl.querySelectorAll('.cell').forEach((b) => b.addEventListener('click', () => tapCell(+b.dataset.i)));
+  on('help', askHelp);
+  if (isCoachTurn()) { $('#help').disabled = true; scheduleCoach(); }
+}
+
+// The end of a game, in its first form: the title and the board as it ended, the winning three
+// ringed. The box's end-of-game line and Play again come with Task 11.
+function screenDone() {
+  const w = app.result.winner;
+  const title = !w ? t('drawTitle') : app.game.mode === 'two' ? t('markWins', { mark: markHtml(w) }) : t(w === app.game.mark ? 'youWin' : 'lossTitle');
+  const line = app.result.line || [];
+  panelEl.innerHTML = `<h1 id="title">${title}</h1>${boardHtml((i) => (line.includes(i) ? 'win' : ''), false)}`;
 }
 
 function confetti() {
