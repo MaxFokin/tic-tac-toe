@@ -7,7 +7,7 @@ const leaves = (v) => (typeof v === 'string' ? [v] : Object.values(v).flatMap(le
 // Every word the screens and the coach need.
 for (const k of [
   'whoPlays', 'single', 'two', 'coachLevel', 'easy', 'medium', 'hard', 'age5', 'age8', 'age10', 'youAre', 'whoStarts', 'me', 'coach', 'random', 'play', 'howto1', 'howto2', 'howto3',
-  'yourTurn', 'youAreMark', 'coachTurn', 'markTurn', 'tapSquare', 'helpMe', 'cellEmpty', 'cellMark', 'boxStuck', 'boxYouStart', 'boxCoachStarts',
+  'yourTurn', 'youAreMark', 'coachTurn', 'markTurn', 'tapSquare', 'helpMe', 'cellEmpty', 'cellMark', 'cellHint', 'boxStuck', 'boxYouStart', 'boxCoachStarts',
   'hintWin', 'hintBlock', 'hintBlock2', 'hintFork', 'hintTwoInRow', 'hintTwoInRow2', 'hintStopFork', 'hintStopFork2', 'hintCenter', 'hintCorner', 'hintSide', 'hintAny',
   'coachBlock', 'coachFork', 'coachTwoInRow', 'coachStopFork', 'coachCenter', 'coachCorner', 'coachSide',
   'youWin', 'markWins', 'drawTitle', 'lossTitle', 'winLine', 'drawHard', 'drawEasy', 'drawTwo', 'lossMissedWin', 'lossMissedBlock', 'lossFork', 'lossGeneral', 'playAgain',

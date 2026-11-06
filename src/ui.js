@@ -131,10 +131,32 @@ function go(screen) {
 
 function render(animate) {
   clearTimeout(coachTimer);
+  const focused = focusSel(), box = $('#box');
   appEl.dataset.screen = app.screen;
   delete appEl.dataset.mood; // the grey day is the loss screen's only
   refreshChrome();
   ({ welcome: screenWelcome, play: screenPlay, done: screenDone }[app.screen] || screenWelcome)(animate);
+  keepBox(box);
+  const el = focused && panelEl.querySelector(focused);
+  if (el && !el.disabled) el.focus({ preventScroll: true });
+}
+// The focused control, found again after the redraw, so keyboard and screen reader users keep
+// their place: by its id, else by its one data-* attribute (a cell, a welcome choice).
+function focusSel() {
+  const el = document.activeElement;
+  if (!el || el === panelEl || !panelEl.contains(el)) return null;
+  if (el.id) return '#' + el.id;
+  const k = Object.keys(el.dataset)[0];
+  return k ? `[data-${k}="${el.dataset[k]}"]` : null;
+}
+// The box is the only live region. A region created with its text is often not read, so the old
+// box node goes back in with the new line: a screen reader hears each new line, and only that.
+function keepBox(old) {
+  const box = $('#box');
+  if (!old || !box) return;
+  old.className = box.className;
+  if (old.innerHTML !== box.innerHTML) old.innerHTML = box.innerHTML;
+  box.replaceWith(old);
 }
 
 // The tile icons: the header's logo for Single player, a blue X beside an orange O for 2 players.
@@ -163,11 +185,12 @@ function screenWelcome() {
     saveSetup();
     render(false);
   }));
-  on('play', startGame);
+  on('play', () => startGame());
 }
 
-function startGame() {
-  const s = app.setup;
+// Play again passes the game just played, so it starts the same game even if another tab changed
+// the saved setup since.
+function startGame(s = app.setup) {
   app.game = { ...s };
   app.board = emptyBoard();
   app.history = [];
@@ -258,11 +281,11 @@ function boardHtml(ring, animate) {
   const lastMove = app.history.length ? app.history[app.history.length - 1].square : -1;
   return `<div class="board">${app.board.map((m, i) => {
     const cls = ['cell', m.toLowerCase(), ring(i), animate && i === lastMove ? 'pop' : ''].filter(Boolean).join(' ');
-    const label = m ? t('cellMark', { n: i + 1, mark: m }) : t('cellEmpty', { n: i + 1 });
+    const label = m ? t('cellMark', { n: i + 1, mark: m }) : t(i === app.hint ? 'cellHint' : 'cellEmpty', { n: i + 1 });
     return `<button class="${cls}" type="button" data-i="${i}" aria-label="${label}">${MARK_SVG[m] || ''}</button>`;
   }).join('')}</div>`;
 }
-const boxHtml = () => `<div class="box${/^(hint|coach)/.test(app.line.key) ? ' coach' : ''}" id="box">${t(app.line.key, app.line.vars)}</div>`;
+const boxHtml = () => `<div class="box${/^(hint|coach)/.test(app.line.key) ? ' coach' : ''}" id="box" aria-live="polite">${t(app.line.key, app.line.vars)}</div>`;
 
 function screenPlay(animate) {
   const single = app.game.mode === 'single';
@@ -292,10 +315,10 @@ function screenDone() {
   if (lost) appEl.dataset.mood = 'sad';
   panelEl.innerHTML = `<h1 id="title">${title}</h1>
     ${!w ? '<div class="handshake" aria-hidden="true">🤝</div>' : ''}${lost ? '<div class="cloud" aria-hidden="true">🌧️</div>' : ''}
-    ${boardHtml(ring, false)}<div class="box coach" id="box">${t(say)}</div>
+    ${boardHtml(ring, false)}<div class="box coach" id="box" aria-live="polite">${t(say)}</div>
     <div class="actions">${btn('again', t('playAgain'), 'primary small')}</div>`;
   panelEl.querySelectorAll('.cell').forEach((b) => { b.disabled = true; });
-  on('again', startGame);
+  on('again', () => startGame(app.game));
 }
 
 // Flat confetti in turn: a rounded square, an X and an O, each in a random sticker color.

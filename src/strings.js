@@ -188,6 +188,11 @@ const STRINGS = {
     he: 'ריבוע {n}, {mark}',
     pl: 'Pole {n}, {mark}',
   },
+  cellHint: {
+    en: 'Square {n}, empty, the coach’s hint',
+    he: 'ריבוע {n}, ריק, הרמז של המאמן',
+    pl: 'Pole {n}, puste, podpowiedź trenera',
+  },
   boxStuck: {
     en: 'Stuck? Tap Help me.',
     he: 'תקוע? לחץ על עזור לי.',

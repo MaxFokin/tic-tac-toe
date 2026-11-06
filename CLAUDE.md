@@ -72,7 +72,7 @@ on Pages. Until then the URL gives a 404 and the README's "Open the app" link le
     welcome rows, the board and its rings, the handshake, the grey day.
   - `game.js` - the board, the full-tree search, the hint and its reason, the three coaches, why
     the child lost. No DOM.
-  - `strings.js` - every word a person reads (`STRINGS`, 67 keys), `LANGS`, `lang`, `useLang`,
+  - `strings.js` - every word a person reads (`STRINGS`, 68 keys), `LANGS`, `lang`, `useLang`,
     `t()`. No DOM.
   - `ui.js` - state, saving and restoring, the setup, language, theme, the three screens, confetti.
   - `main.js` - start-up: Start over (armed on the first tap), the theme button, the saved or the
@@ -112,7 +112,10 @@ assembled. Function declarations are hoisted inside the IIFE, so `ui.js` may cal
 (the box's line, `{ key, vars }`), `hint` (the ringed square), `last` (the coach's last square) and
 `result` (`{ winner, line }` at the end). `go(screen)` saves and renders. `render()` clears the
 coach's timer, sets `data-screen` on `#app`, drops `data-mood`, refreshes the chrome (the language
-switch and the theme toggle's label) and draws the screen.
+switch and the theme toggle's label) and draws the screen. It then puts the focus back on the
+control that had it (found by its id or its one `data-*` attribute; a disabled one is skipped) and
+puts the old `#box` node back with the new line, so the box, the only `aria-live` region, keeps its
+node and a screen reader reads each new line and nothing else.
 
 The welcome screen's four choices are saved under `ttt-coach-setup` the moment one changes;
 `loadSetup()` takes only known values. The first time: Single player, Easy, X, Me. The game is
@@ -139,7 +142,8 @@ any tap takes the ring away, and there is no count. In 2 players the box goes ba
 Help me." after every move, and a hint that names the other player uses its `2` form with that
 player's mark (`hintBlock2`, `hintTwoInRow2`, `hintStopFork2`). The box's border is magenta
 (`.box.coach`) for a hint or a coach line. The marks are inline SVG strokes; the board is
-`min(72vw, 250px)` wide.
+`min(72vw, 250px)` wide and as tall (an explicit height beside `aspect-ratio`). Each square's
+`aria-label` is `cellEmpty`, `cellMark` or, on the hinted square, `cellHint`.
 
 ### The coach (game.js)
 
@@ -182,7 +186,8 @@ win). The lines are `lossMissedWin`, `lossMissedBlock`, `lossFork`, `lossGeneral
 
 The board stays as it ended, the winning three ringed in the winner's color, every square disabled;
 under it the box (always with the magenta border, as in the mockups) and a small yellow Play again,
-which starts a new game with the same setup.
+which starts a new game from `app.game`, the setup of the game just played (not `app.setup`, which
+another tab may have changed).
 - A win (the child's, or either mark's in 2 players): "You win!" / "X wins!" / "O wins!", "Three in
   a row. Well done!", and confetti from `finish()`, so a reload of the done screen has none: 90 flat
   pieces (a rounded square, an X, an O in turn), each in a random sticker color, falling 2.2 to
@@ -249,8 +254,8 @@ Chromium build 1223 lives in `~/Library/Caches/ms-playwright`. The flows and the
 Google Fonts requests, so everything runs offline with the fallback fonts.
 
 Facts the tests guarantee:
-- Strings: 67 keys, each in English, Hebrew and Polish with the same placeholders, no em dash, no
-  word of three or more capitals, plural sets with `other`; the 62 keys the screens and the coach
+- Strings: 68 keys, each in English, Hebrew and Polish with the same placeholders, no em dash, no
+  word of three or more capitals, plural sets with `other`; the 63 keys the screens and the coach
   need exist; `t()` fills placeholders, picks plurals, falls back to English and returns an
   unknown key as is.
 - The board: a winner is found on all eight lines for both marks; a full board with no line is a
@@ -273,7 +278,8 @@ Facts the tests guarantee:
   (three links, the same words, order, font and direction, inside the screen on welcome); a
   2-player game where Help me shows O the block with the `2` line, a reload keeps the ring and the
   line, any tap takes the ring away, X
-  wins with three ringed squares and confetti, and a reload keeps the done screen; following
+  wins with three ringed squares and confetti, a reload keeps the done screen, and Play again
+  starts the game just played even after the saved setup changed under it; following
   Help me against Hard, as X starting and as O with the coach starting, three games each, always
   ends in the handshake, never the grey day, and Play again starts on an empty board.
 - Browser, once: the welcome defaults; 2 players hides the coach rows and shows three how-to lines;
@@ -289,7 +295,9 @@ Facts the tests guarantee:
   welcome; a saved hint line on the coach's turn comes back with no ring; a loss (X on 0, 1, 3 against Hard) shows "Oh no…", the grey body, the cloud, the
   coach's three ringed and the missed-block line, and Start over brings the color back; under
   reduced motion there is no confetti and the handshake stands still; a win throws 90 pieces in more
-  than one color.
+  than one color; with the keyboard, a welcome choice, a square (through the coach's move) and
+  Help me keep the focus, `#panel` is not live and `#box` is, the box keeps its node across a move,
+  and the hinted square's label says it is the coach's hint.
 - The walks (`screens.py`): the English text of the eight screens equals the snapshot; Hebrew
   screens hold no Latin word but the allowed names and X and O; Polish screens hold no English word
   from the snapshot; every screen is at most 640 tall and 360 wide at 360x640, with the credits line
@@ -351,8 +359,11 @@ every screen is within 23 px of these (English welcome 608), and the draw is the
   2022); an older browser shows the loss in normal colors. Never checked on an old device.
 - After the child's move, the hint line (and the magenta border) stays in the box through the
   coach's 700 ms wait, until the coach's line replaces it. The spec is silent; for Max to notice.
-- Every welcome choice redraws the screen, so the focus is lost after each tap (keyboard and screen
-  reader users start over at the top). The pressed tile keeps its magenta shadow while pressed.
+- Every choice and move redraws the panel; `render()` puts the focus back, but the last move of a
+  game lands on the done screen, whose squares are disabled, so the focus falls to the page there.
+  The title ("Your turn", "The coach’s turn") is not live, only the box. The new `cellHint` label
+  is a draft in all three languages, for Max's review. The pressed tile keeps its magenta shadow
+  while pressed.
 - The Easy coach's two 0.5 knobs are guesses, not yet tuned on Max's son.
 - The loss line names a fork whenever the coach played one, whether or not the child could still
   have stopped it ("Next time, stop me before that" stays true).

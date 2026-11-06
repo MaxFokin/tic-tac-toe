@@ -176,6 +176,11 @@ async def two_player_game(browser, code):
     assert await count(page, '.confetti') == 1
     await page.reload(); await page.wait_for_timeout(300)
     assert await page.get_attribute('#app', 'data-screen') == 'done' and await count(page, '.cell.win') == 3, 'a reload keeps the end of the game'
+    await page.evaluate("localStorage.setItem('ttt-coach-setup', JSON.stringify({ mode: 'single', level: 'hard', mark: 'O', first: 'coach' }))")
+    await page.reload(); await page.wait_for_timeout(300)
+    await tap(page, '#again')
+    game = await page.evaluate("JSON.parse(localStorage.getItem('ttt-coach-v1')).game.mode")
+    assert game == 'two' and await count(page, '.cell.x, .cell.o') == 0, 'Play again starts the game just played, not a setup another tab saved'
     assert not errors, errors
     print(f'two player game ({code}): ok')
     await page.context.close()
@@ -303,6 +308,27 @@ async def loss_screen(browser):
     print('loss screen: ok')
     await page.context.close()
 
+# Keyboard and screen reader: the focus stays on the control after the redraw, the box alone is
+# live and keeps its node, and the hinted square says so.
+async def keyboard_and_reader(browser):
+    page, errors = await new_page(browser)
+    active = "(() => { const e = document.activeElement; return e.id || Object.values(e.dataset)[0] || e.tagName; })()"
+    await page.focus('.level[data-level="hard"]'); await page.keyboard.press('Enter'); await page.wait_for_timeout(100)
+    assert await pressed(page, '.level[data-level="hard"]') and await page.evaluate(active) == 'hard', 'a welcome choice keeps the focus'
+    await page.focus('#play'); await page.keyboard.press('Enter'); await page.wait_for_timeout(200)
+    assert await page.get_attribute('#panel', 'aria-live') is None and await page.get_attribute('#box', 'aria-live') == 'polite', 'the box alone is live'
+    await page.evaluate("document.getElementById('box').probe = 1")
+    await page.focus('.cell[data-i="0"]'); await page.keyboard.press('Enter'); await page.wait_for_timeout(1000)
+    assert await count(page, '.cell.o') == 1 and await page.evaluate(active) == '0', 'the tapped square keeps the focus through the coach’s move'
+    assert await page.evaluate("document.getElementById('box').probe") == 1, 'the box keeps its node, so its new line is read'
+    await page.focus('#help'); await page.keyboard.press('Enter'); await page.wait_for_timeout(100)
+    hint = await page.get_attribute('.cell.hint', 'data-i')
+    assert await page.evaluate(active) == 'help', 'Help me keeps the focus'
+    assert await page.get_attribute('.cell.hint', 'aria-label') == f'Square {int(hint) + 1}, empty, the coach’s hint'
+    assert not errors, errors
+    print('keyboard and reader: ok')
+    await page.context.close()
+
 TWO_WIN = (0, 3, 1, 4, 2)
 TWO_DRAW = (0, 1, 2, 4, 3, 5, 7, 6, 8)
 async def two_player_moves(page, squares):
@@ -356,6 +382,7 @@ async def main():
         await loss_screen(browser)
         await reduced_motion(browser)
         await win_confetti(browser)
+        await keyboard_and_reader(browser)
         await browser.close()
 
 asyncio.run(main())
