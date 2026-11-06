@@ -1,3 +1,5 @@
+> The hand-over of 2026-11-06, kept for history. `CLAUDE.md` is current.
+
 # Tic Tac Coach - starting point
 
 A sister app to Cube Coach: the same idea, the same look, the same tooling, for tic-tac-toe.
