@@ -250,8 +250,38 @@ function bestSquares(board, mark) {
 }
 // Empty squares where `mark` completes three.
 const threats = (board, mark) => empties(board).filter((i) => winner(play(board, i, mark))?.mark === mark);
-// Empty squares where playing `mark` leaves two or more threats.
-const forkSquares = (board, mark) => empties(board).filter((i) => threats(play(board, i, mark), mark).length >= 2);
+// Empty squares where playing `mark` leaves two or more threats (a square that wins outright is not a fork).
+const forkSquares = (board, mark) =>
+  empties(board).filter((i) => !winner(play(board, i, mark)) && threats(play(board, i, mark), mark).length >= 2);
+
+// ----- The hint: the best square and a reason that is true of it -----
+// In the order the coach prefers to name them.
+const REASONS = ['win', 'block', 'fork', 'twoInRow', 'stopFork', 'center', 'corner', 'any', 'side'];
+// Is `reason` true of `square` for `mark` to play? The one place that says what each reason means.
+function isReason(board, mark, square, reason) {
+  const foe = other(mark);
+  switch (reason) {
+    case 'win': return threats(board, mark).includes(square);
+    case 'block': return threats(board, foe).includes(square);
+    case 'fork': return forkSquares(board, mark).includes(square);
+    case 'twoInRow': return forkSquares(board, foe).length > 0 && threats(play(board, square, mark), mark).length === 1;
+    case 'stopFork': return forkSquares(board, foe).includes(square);
+    case 'center': return square === CENTER;
+    case 'corner': return CORNERS.includes(square);
+    case 'side': return SIDES.includes(square);
+    case 'any': return empties(board).every((s) => bestSquares(board, mark).includes(s));
+  }
+}
+// The first true reason for a square, never the vague 'any'.
+const reasonFor = (board, mark, square) => REASONS.find((r) => r !== 'any' && isReason(board, mark, square, r));
+// The best square with the first reason that names it, the lowest square on a tie.
+function advise(board, mark) {
+  const best = bestSquares(board, mark);
+  for (const reason of REASONS) {
+    const square = best.find((s) => isReason(board, mark, s, reason));
+    if (square !== undefined) return { square, reason };
+  }
+}
 // ===== Words, in every language =====
 // STRINGS[key] = { en, he, pl }. A value is a string with {name} placeholders or a plural set
 // ({ one, two, few, many, other }; other is required). t(key, vars) picks the current language,
