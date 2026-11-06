@@ -104,11 +104,9 @@ h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spa
 
 /* Confetti */
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
-.confetti i {
-  position: absolute; top: -24px; width: 11px; height: 11px; border-radius: 3px; background: var(--c);
-  animation: fall var(--t) cubic-bezier(.25, .6, .45, 1) var(--d) forwards;
-}
-@keyframes fall { to { transform: translate3d(var(--x), 112vh, 0) rotate(var(--r)); } }
+.confetti i { position: absolute; top: -24px; animation: fall var(--t) cubic-bezier(.25, .6, .45, 1) var(--d) forwards; }
+.confetti svg { display: block; width: var(--s); height: var(--s); }
+@keyframes fall { to { transform: translate3d(var(--dx), 112vh, 0) rotate(var(--r)); } }
 
 /* Right to left: words follow the language; the header, the board and the credits never mirror */
 .top, .board, .langs, .credits { direction: ltr; }
@@ -124,6 +122,5 @@ h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spa
   .btn { min-height: 52px; padding: 11px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .confetti i { animation-duration: .01s !important; }
-  .cell.hint, .cell.pop { animation: none; }
+  .cell.hint, .cell.pop, .confetti i { animation: none; }
 }

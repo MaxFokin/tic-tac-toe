@@ -118,11 +118,9 @@ h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spa
 
 /* Confetti */
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
-.confetti i {
-  position: absolute; top: -24px; width: 11px; height: 11px; border-radius: 3px; background: var(--c);
-  animation: fall var(--t) cubic-bezier(.25, .6, .45, 1) var(--d) forwards;
-}
-@keyframes fall { to { transform: translate3d(var(--x), 112vh, 0) rotate(var(--r)); } }
+.confetti i { position: absolute; top: -24px; animation: fall var(--t) cubic-bezier(.25, .6, .45, 1) var(--d) forwards; }
+.confetti svg { display: block; width: var(--s); height: var(--s); }
+@keyframes fall { to { transform: translate3d(var(--dx), 112vh, 0) rotate(var(--r)); } }
 
 /* Right to left: words follow the language; the header, the board and the credits never mirror */
 .top, .board, .langs, .credits { direction: ltr; }
@@ -138,8 +136,7 @@ h1 { font: 600 clamp(26px, 7vw, 32px)/1.12 var(--display); margin: 0; letter-spa
   .btn { min-height: 52px; padding: 11px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .confetti i { animation-duration: .01s !important; }
-  .cell.hint, .cell.pop { animation: none; }
+  .cell.hint, .cell.pop, .confetti i { animation: none; }
 }
 /* Choice tiles */
 .choose { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 2px; }
@@ -239,6 +236,30 @@ h1 b.o, .sub b.o { color: var(--o); }
 .cell.win.x { box-shadow: 0 0 0 4px var(--x), inset 0 -6px 0 rgba(0, 0, 0, .14); }
 .cell.win.o { box-shadow: 0 0 0 4px var(--o), inset 0 -6px 0 rgba(0, 0, 0, .14); }
 .box.coach { border-color: var(--coach); }
+
+/* Done: the handshake on a draw, the grey day on a loss */
+.cell:disabled { cursor: default; }
+.handshake { align-self: center; font-size: 64px; line-height: 1; margin: -4px 0 -2px; transform-origin: 50% 60%; animation: shake .7s ease-in-out 3; }
+@keyframes shake { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+#app[data-screen="done"] .handshake + .board { width: min(64vw, 230px); }
+/* The grey day reaches the body, outside #app, so the tokens are set on the root. */
+:root:has(#app[data-mood="sad"]) { --desk: #DFE3EA; --paper: #F1F3F7; --ink: #3A3F4C; --ink-soft: #7A8294; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):has(#app[data-mood="sad"]) { --desk: #0C0E12; --paper: #171A20; --ink: #B5BAC6; --ink-soft: #7A8294; }
+}
+:root[data-theme="dark"]:has(#app[data-mood="sad"]) { --desk: #0C0E12; --paper: #171A20; --ink: #B5BAC6; --ink-soft: #7A8294; }
+#app[data-mood="sad"] .board { filter: saturate(.35); opacity: .85; }
+.cloud {
+  position: absolute; z-index: 1; left: 50%; top: 26px; transform: translateX(-50%);
+  font-size: 56px; line-height: 1; animation: drift 3s ease-in-out infinite;
+}
+@keyframes drift { 50% { transform: translateX(calc(-50% + 10px)); } }
+.cell.droop svg { opacity: .45; transform: rotate(14deg) translateY(6px); }
+.cell.droop:nth-child(2n) svg { transform: rotate(-12deg) translateY(5px); }
+.cell.droop:nth-child(3n) svg { transform: rotate(20deg) translateY(7px); }
+@media (prefers-reduced-motion: reduce) {
+  .handshake, .cloud { animation: none; }
+}
 </style>
 </head>
 <body>
@@ -869,6 +890,7 @@ function go(screen) {
 function render(animate) {
   clearTimeout(coachTimer);
   appEl.dataset.screen = app.screen;
+  delete appEl.dataset.mood; // the grey day is the loss screen's only
   refreshChrome();
   ({ welcome: screenWelcome, play: screenPlay, done: screenDone }[app.screen] || screenWelcome)(animate);
 }
@@ -1013,25 +1035,43 @@ function screenPlay(animate) {
   if (isCoachTurn()) { $('#help').disabled = true; scheduleCoach(); }
 }
 
-// The end of a game, in its first form: the title and the board as it ended, the winning three
-// ringed. The box's end-of-game line and Play again come with Task 11.
+// The end of a game: the title, the board as it ended with the winning three ringed, the coach's
+// line and Play again. A draw gets the handshake; a loss for the child the grey day: the colors
+// fade, a rain cloud drifts over the board and the child's marks droop.
 function screenDone() {
-  const w = app.result.winner;
-  const title = !w ? t('drawTitle') : app.game.mode === 'two' ? t('markWins', { mark: markHtml(w) }) : t(w === app.game.mark ? 'youWin' : 'lossTitle');
-  const line = app.result.line || [];
-  panelEl.innerHTML = `<h1 id="title">${title}</h1>${boardHtml((i) => (line.includes(i) ? 'win' : ''), false)}`;
+  const w = app.result.winner, line = app.result.line || [];
+  const single = app.game.mode === 'single', child = app.game.mark;
+  const lost = single && w && w !== child;
+  const title = !w ? t('drawTitle') : !single ? t('markWins', { mark: markHtml(w) }) : t(lost ? 'lossTitle' : 'youWin');
+  const reason = lost && lossReason(app.history, child);
+  const say = !w ? (!single ? 'drawTwo' : app.game.level === 'hard' ? 'drawHard' : 'drawEasy')
+    : lost ? 'loss' + reason[0].toUpperCase() + reason.slice(1) : 'winLine';
+  const ring = (i) => `${line.includes(i) ? 'win' : ''} ${lost && app.board[i] === child ? 'droop' : ''}`.trim();
+  if (lost) appEl.dataset.mood = 'sad';
+  panelEl.innerHTML = `<h1 id="title">${title}</h1>
+    ${!w ? '<div class="handshake" aria-hidden="true">🤝</div>' : ''}${lost ? '<div class="cloud" aria-hidden="true">🌧️</div>' : ''}
+    ${boardHtml(ring, false)}<div class="box coach" id="box">${t(say)}</div>
+    <div class="actions">${btn('again', t('playAgain'), 'primary small')}</div>`;
+  panelEl.querySelectorAll('.cell').forEach((b) => { b.disabled = true; });
+  on('again', startGame);
 }
 
+// Flat confetti in turn: a rounded square, an X and an O, each in a random sticker color.
+const PIECES = [
+  (c) => `<rect x="8" y="8" width="84" height="84" rx="22" fill="${c}"/>`,
+  (c) => `<path d="M22 22 78 78M78 22 22 78" fill="none" stroke="${c}" stroke-width="16" stroke-linecap="round"/>`,
+  (c) => `<circle cx="50" cy="50" r="30" fill="none" stroke="${c}" stroke-width="16"/>`,
+];
 function confetti() {
   if (reduced) return;
   const layer = document.createElement('div');
   layer.className = 'confetti';
-  const cols = STICKERS;
   for (let i = 0; i < 90; i++) {
     const p = document.createElement('i');
+    p.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${PIECES[i % PIECES.length](pick(STICKERS))}</svg>`;
     p.style.left = Math.random() * 100 + 'vw';
-    p.style.setProperty('--c', cols[i % cols.length]);
-    p.style.setProperty('--x', (Math.random() * 40 - 20).toFixed(1) + 'vw');
+    p.style.setProperty('--s', (12 + Math.random() * 8).toFixed(1) + 'px');
+    p.style.setProperty('--dx', (Math.random() * 40 - 20).toFixed(1) + 'vw');
     p.style.setProperty('--r', Math.round(Math.random() * 720 - 360) + 'deg');
     p.style.setProperty('--t', (2.2 + Math.random() * 1.6).toFixed(2) + 's');
     p.style.setProperty('--d', (Math.random() * 0.5).toFixed(2) + 's');

@@ -126,6 +126,7 @@ function go(screen) {
 function render(animate) {
   clearTimeout(coachTimer);
   appEl.dataset.screen = app.screen;
+  delete appEl.dataset.mood; // the grey day is the loss screen's only
   refreshChrome();
   ({ welcome: screenWelcome, play: screenPlay, done: screenDone }[app.screen] || screenWelcome)(animate);
 }
@@ -270,25 +271,43 @@ function screenPlay(animate) {
   if (isCoachTurn()) { $('#help').disabled = true; scheduleCoach(); }
 }
 
-// The end of a game, in its first form: the title and the board as it ended, the winning three
-// ringed. The box's end-of-game line and Play again come with Task 11.
+// The end of a game: the title, the board as it ended with the winning three ringed, the coach's
+// line and Play again. A draw gets the handshake; a loss for the child the grey day: the colors
+// fade, a rain cloud drifts over the board and the child's marks droop.
 function screenDone() {
-  const w = app.result.winner;
-  const title = !w ? t('drawTitle') : app.game.mode === 'two' ? t('markWins', { mark: markHtml(w) }) : t(w === app.game.mark ? 'youWin' : 'lossTitle');
-  const line = app.result.line || [];
-  panelEl.innerHTML = `<h1 id="title">${title}</h1>${boardHtml((i) => (line.includes(i) ? 'win' : ''), false)}`;
+  const w = app.result.winner, line = app.result.line || [];
+  const single = app.game.mode === 'single', child = app.game.mark;
+  const lost = single && w && w !== child;
+  const title = !w ? t('drawTitle') : !single ? t('markWins', { mark: markHtml(w) }) : t(lost ? 'lossTitle' : 'youWin');
+  const reason = lost && lossReason(app.history, child);
+  const say = !w ? (!single ? 'drawTwo' : app.game.level === 'hard' ? 'drawHard' : 'drawEasy')
+    : lost ? 'loss' + reason[0].toUpperCase() + reason.slice(1) : 'winLine';
+  const ring = (i) => `${line.includes(i) ? 'win' : ''} ${lost && app.board[i] === child ? 'droop' : ''}`.trim();
+  if (lost) appEl.dataset.mood = 'sad';
+  panelEl.innerHTML = `<h1 id="title">${title}</h1>
+    ${!w ? '<div class="handshake" aria-hidden="true">🤝</div>' : ''}${lost ? '<div class="cloud" aria-hidden="true">🌧️</div>' : ''}
+    ${boardHtml(ring, false)}<div class="box coach" id="box">${t(say)}</div>
+    <div class="actions">${btn('again', t('playAgain'), 'primary small')}</div>`;
+  panelEl.querySelectorAll('.cell').forEach((b) => { b.disabled = true; });
+  on('again', startGame);
 }
 
+// Flat confetti in turn: a rounded square, an X and an O, each in a random sticker color.
+const PIECES = [
+  (c) => `<rect x="8" y="8" width="84" height="84" rx="22" fill="${c}"/>`,
+  (c) => `<path d="M22 22 78 78M78 22 22 78" fill="none" stroke="${c}" stroke-width="16" stroke-linecap="round"/>`,
+  (c) => `<circle cx="50" cy="50" r="30" fill="none" stroke="${c}" stroke-width="16"/>`,
+];
 function confetti() {
   if (reduced) return;
   const layer = document.createElement('div');
   layer.className = 'confetti';
-  const cols = STICKERS;
   for (let i = 0; i < 90; i++) {
     const p = document.createElement('i');
+    p.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${PIECES[i % PIECES.length](pick(STICKERS))}</svg>`;
     p.style.left = Math.random() * 100 + 'vw';
-    p.style.setProperty('--c', cols[i % cols.length]);
-    p.style.setProperty('--x', (Math.random() * 40 - 20).toFixed(1) + 'vw');
+    p.style.setProperty('--s', (12 + Math.random() * 8).toFixed(1) + 'px');
+    p.style.setProperty('--dx', (Math.random() * 40 - 20).toFixed(1) + 'vw');
     p.style.setProperty('--r', Math.round(Math.random() * 720 - 360) + 'deg');
     p.style.setProperty('--t', (2.2 + Math.random() * 1.6).toFixed(2) + 's');
     p.style.setProperty('--d', (Math.random() * 0.5).toFixed(2) + 's');

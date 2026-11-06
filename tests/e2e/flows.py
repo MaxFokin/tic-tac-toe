@@ -243,6 +243,82 @@ async def garbage_record(browser):
         await page.context.close()
     print('garbage record: ok')
 
+# Follows Help me on every turn of the child's until the game ends; the coach's turns are waited out.
+async def follow_hints(page):
+    while True:
+        await page.wait_for_function("document.getElementById('app').dataset.screen === 'done' || !document.getElementById('help').disabled")
+        if await page.get_attribute('#app', 'data-screen') == 'done': return
+        await tap(page, '#help')
+        await tap_cell(page, await page.get_attribute('.cell.hint', 'data-i'))
+
+async def hints_never_lose(browser, code):
+    page, errors = await new_page(browser)
+    for sel in (f'.lang[data-lang="{code}"]', '.level[data-level="hard"]'): await tap(page, sel)
+    for mark, first in (('X', 'me'), ('O', 'coach')):
+        for sel in (f'.mark[data-mark="{mark}"]', f'.first[data-first="{first}"]', '#play'): await tap(page, sel)
+        for game in range(3):
+            await follow_hints(page)
+            assert await page.is_visible('.handshake'), f'Help me never loses to the Hard coach ({mark}, game {game + 1})'
+            assert await page.get_attribute('#app', 'data-mood') is None
+            if code == 'en':
+                assert await text(page, '#title') == 'It’s a draw!'
+                assert await text(page, '#box') == 'Nobody beats the Hard coach. A draw is as good as it gets!'
+            if game < 2:
+                await tap(page, '#again')
+                assert await page.get_attribute('#app', 'data-screen') == 'play', 'Play again starts a new game'
+                assert await count(page, '.cell.x, .cell.o') == 0, 'Play again starts on an empty board'
+        await page.tap('#restart'); await tap(page, '#restart')
+    assert not errors, errors
+    print(f'hints never lose ({code}): ok')
+    await page.context.close()
+
+async def loss_screen(browser):
+    page, errors = await single_hard_x(browser)
+    for i in (0, 1, 3): await tap_cell(page, i, 1000)
+    assert await text(page, '#title') == 'Oh no…'
+    assert await page.get_attribute('#app', 'data-mood') == 'sad'
+    assert await page.is_visible('.cloud')
+    wins = await page.eval_on_selector_all('.cell.win', 'els => els.map((e) => e.dataset.i + e.className)')
+    assert [w[0] for w in wins] == ['2', '4', '6'] and all(' o ' in w + ' ' for w in wins), wins
+    assert await text(page, '#box') == 'You could have blocked me. Next time, look at my two in a row.'
+    assert await page.evaluate("getComputedStyle(document.body).backgroundColor") == 'rgb(223, 227, 234)', 'the grey day reaches the whole screen'
+    await page.tap('#restart'); await tap(page, '#restart')
+    assert await page.get_attribute('#app', 'data-screen') == 'welcome'
+    assert await page.get_attribute('#app', 'data-mood') is None, 'Start over brings the color back'
+    assert await page.evaluate("getComputedStyle(document.body).backgroundColor") == 'rgb(237, 240, 245)'
+    assert not errors, errors
+    print('loss screen: ok')
+    await page.context.close()
+
+TWO_WIN = (0, 3, 1, 4, 2)
+TWO_DRAW = (0, 1, 2, 4, 3, 5, 7, 6, 8)
+async def two_player_moves(page, squares):
+    for i in squares: await tap_cell(page, i)
+    assert await page.get_attribute('#app', 'data-screen') == 'done'
+
+async def reduced_motion(browser):
+    page, errors = await new_page(browser, reduced_motion='reduce')
+    for sel in ('#mode-two', '#play'): await tap(page, sel)
+    await two_player_moves(page, TWO_WIN)
+    assert await count(page, '.confetti') == 0, 'no confetti under reduced motion'
+    await tap(page, '#again')
+    await two_player_moves(page, TWO_DRAW)
+    assert await page.evaluate("getComputedStyle(document.querySelector('.handshake')).animationName") == 'none', 'the handshake stands still under reduced motion'
+    assert not errors, errors
+    print('reduced motion: ok')
+    await page.context.close()
+
+async def win_confetti(browser):
+    page, errors = await new_page(browser)
+    for sel in ('#mode-two', '#play'): await tap(page, sel)
+    await two_player_moves(page, TWO_WIN)
+    assert await count(page, '.confetti svg') == 90
+    colors = await page.eval_on_selector_all('.confetti svg *', 'els => [...new Set(els.map((e) => e.getAttribute("fill") === "none" ? e.getAttribute("stroke") : e.getAttribute("fill")))]')
+    assert len(colors) >= 2, f'the pieces come in random sticker colors: {colors}'
+    assert not errors, errors
+    print('win confetti: ok')
+    await page.context.close()
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -257,11 +333,15 @@ async def main():
         for code in codes:
             await chrome(browser, code)
             await two_player_game(browser, code)
+            await hints_never_lose(browser, code)
         await coach_game_reload(browser)
         await taken_and_busy(browser)
         await coach_first(browser)
         await random_start(browser)
         await garbage_record(browser)
+        await loss_screen(browser)
+        await reduced_motion(browser)
+        await win_confetti(browser)
         await browser.close()
 
 asyncio.run(main())

@@ -96,3 +96,27 @@ h1 b.o, .sub b.o { color: var(--o); }
 .cell.win.x { box-shadow: 0 0 0 4px var(--x), inset 0 -6px 0 rgba(0, 0, 0, .14); }
 .cell.win.o { box-shadow: 0 0 0 4px var(--o), inset 0 -6px 0 rgba(0, 0, 0, .14); }
 .box.coach { border-color: var(--coach); }
+
+/* Done: the handshake on a draw, the grey day on a loss */
+.cell:disabled { cursor: default; }
+.handshake { align-self: center; font-size: 64px; line-height: 1; margin: -4px 0 -2px; transform-origin: 50% 60%; animation: shake .7s ease-in-out 3; }
+@keyframes shake { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+#app[data-screen="done"] .handshake + .board { width: min(64vw, 230px); }
+/* The grey day reaches the body, outside #app, so the tokens are set on the root. */
+:root:has(#app[data-mood="sad"]) { --desk: #DFE3EA; --paper: #F1F3F7; --ink: #3A3F4C; --ink-soft: #7A8294; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):has(#app[data-mood="sad"]) { --desk: #0C0E12; --paper: #171A20; --ink: #B5BAC6; --ink-soft: #7A8294; }
+}
+:root[data-theme="dark"]:has(#app[data-mood="sad"]) { --desk: #0C0E12; --paper: #171A20; --ink: #B5BAC6; --ink-soft: #7A8294; }
+#app[data-mood="sad"] .board { filter: saturate(.35); opacity: .85; }
+.cloud {
+  position: absolute; z-index: 1; left: 50%; top: 26px; transform: translateX(-50%);
+  font-size: 56px; line-height: 1; animation: drift 3s ease-in-out infinite;
+}
+@keyframes drift { 50% { transform: translateX(calc(-50% + 10px)); } }
+.cell.droop svg { opacity: .45; transform: rotate(14deg) translateY(6px); }
+.cell.droop:nth-child(2n) svg { transform: rotate(-12deg) translateY(5px); }
+.cell.droop:nth-child(3n) svg { transform: rotate(20deg) translateY(7px); }
+@media (prefers-reduced-motion: reduce) {
+  .handshake, .cloud { animation: none; }
+}
