@@ -93,7 +93,7 @@
       "id": "pages",
       "label": "GitHub Pages",
       "kind": "external",
-      "summary": "Free hosting that publishes the page at maxfokin.github.io/tic-tac-toe from main, once it is turned on for the repo."
+      "summary": "Free hosting that publishes the page at maxfokin.github.io/tic-tac-toe within a minute or two of every push to main."
     }
   ],
   "edges": [

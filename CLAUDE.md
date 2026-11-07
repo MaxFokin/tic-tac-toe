@@ -20,9 +20,10 @@ When a fact here changes, change it here in the same commit.
 
 ## Live
 
-https://maxfokin.github.io/tic-tac-toe/ once GitHub Pages is on. `main` is pushed (2026-11-07);
-the one step left is Max's: turn on Pages for the repo ("Deploy from a branch", `main`,
-`/ (root)`). Until then the URL gives a 404 and the README's "Open the app" link leads there.
+https://maxfokin.github.io/tic-tac-toe/, live since 2026-11-07, and the floorplan at
+https://maxfokin.github.io/tic-tac-toe/floorplan/. Checked that day in the cmux browser at 360x640:
+a game against Hard following Help me ends in the handshake draw, the squares are off while the
+coach thinks, a two-player win drops confetti, Hebrew reads right to left, no page errors.
 
 ## Start of every session
 
@@ -46,8 +47,8 @@ the one step left is Max's: turn on Pages for the repo ("Deploy from a branch", 
   (`src/game.js`, no DOM) gets its Node tests before any screen.
 - Edit `src/`, run `python3 build.py`, commit `index.html` with the sources. Never edit `index.html`
   by hand. `npm test` before every commit; browser tests before pushing a change to the UI.
-- Every push to `main` goes live (once Pages is on). Ask before pushing unless Max asked for the
-  push in the same conversation.
+- Every push to `main` goes live within a minute or two. Ask before pushing unless Max asked for
+  the push in the same conversation.
 - Keep this file and `README.md` true in the same commit as the change. Test facts, layout numbers
   and the history live here.
 - Every word a person reads lives in `src/strings.js`. Max reviews the Hebrew and Polish there
@@ -355,12 +356,11 @@ tallest either way: 18 px of room. The board's top is 123 px on the play and don
 
 - GitHub: `MaxFokin/tic-tac-toe`, public, created by Max on 2026-11-06. The build was merged into
   `main` (fast-forward from branch `build`, now deleted) and `main` was pushed on 2026-11-07 with
-  the floorplan, at Max's request. Every push to `main` goes live once Pages is on; ask before
-  pushing unless Max asked for the push in the same conversation.
-- GitHub Pages is not on. Max turns it on ("Deploy from a branch", `main`, `/ (root)`); then check
-  https://maxfokin.github.io/tic-tac-toe/ in the cmux browser at a phone viewport; record the date
-  here. After that every push to `main` is live within a minute or two. No CI; the tests are the
-  gate.
+  the floorplan, at Max's request.
+- GitHub Pages is on since 2026-11-07: "Deploy from a branch", `main`, `/ (root)`, HTTPS enforced.
+  Claude Code turned it on with `gh api` when Max reported the address still gave a 404 after the
+  push (a push alone publishes nothing until Pages is on). Every push to `main` is live within a
+  minute or two. No CI; the tests are the gate.
 - Pages only works while the repo is public (the free plan). Its visibility is Max's call, never
   Claude Code's.
 - The `gh` CLI on this Mac is logged in as `MaxFokin`. This clone commits as
@@ -478,4 +478,4 @@ Made with Max on 2026-11-07, after testing the build:
   the squares are disabled while the coach thinks (decision 15).
 - 2026-11-07: Max approved the Hebrew and Polish as drafted; `build` was merged into `main`
   (fast-forward); the floorplan was drawn and committed (`floorplan/`); `main` was pushed to GitHub.
-  Left with Max: turning on GitHub Pages.
+  GitHub Pages turned on the same day; the live app checked at phone size. The plan is done.
