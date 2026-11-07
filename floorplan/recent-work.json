@@ -1,0 +1,41 @@
+{
+  "updatedAt": "2026-11-07T18:05:59Z",
+  "tasks": [
+    {
+      "title": "The first version",
+      "request": "Build Tic-Tac-Toe Coach from the approved design, then open it locally for me to test",
+      "summary": "The whole app was built in 13 reviewed steps: a coach at three strengths, Help me with a true reason, two players on one phone, three languages, and the end-of-game screens with confetti, a handshake and a grey day. Everything is checked by quick checks and browser tests in all three languages.",
+      "items": [
+        { "ref": "src/game.js", "change": "new", "note": "New: the coach itself. It finds the best square from any position, gives a reason that is always true, plays Easy, Medium and Hard, and explains a loss, which is what teaches the child to win." },
+        { "ref": "src/ui.js", "change": "new", "note": "New: the three screens you approved from the mockups, the coach's turn after a short wait, Help me's ring, and the game saved on the phone so a reload lands on the same board." },
+        { "ref": "src/strings.js", "change": "new", "note": "New: every word the child reads, in English, Hebrew and Polish, side by side so you can review them in one place." },
+        { "ref": "src/extra.css", "change": "new", "note": "New: the look you picked: blue X and orange O, the magenta rings that belong to the coach, the handshake and the grey rainy loss screen." },
+        { "ref": "src/main.js", "change": "new", "note": "New: starts the app in the phone's language with the setup you used last, so the usual path is one tap on Play." },
+        { "ref": "tests/game.test.js", "change": "new", "note": "New: proves the Hard coach never loses and that a child who follows every hint never loses either." },
+        { "ref": "tests/e2e/flows.py", "change": "new", "note": "New: plays whole games in a phone-sized browser in all three languages, including reloads, two players and the loss screen." },
+        { "ref": "tests/e2e/screens.py", "change": "new", "note": "New: walks every screen in each language and checks it fits a small phone without scrolling." }
+      ]
+    },
+    {
+      "title": "The board stays put",
+      "request": "When the game finishes the whole game moves up a bit; the board shouldn't move",
+      "summary": "The end-of-game screens now keep the same title and line above the board as the play screen, the handshake sits inside the draw's title, and the board keeps its size. The board's top is the same while playing and after the game, in all three languages.",
+      "items": [
+        { "ref": "src/ui.js", "change": "changed", "note": "The end-of-game screen keeps the line under the title that the play screen has, so nothing above the board changes height when the game ends." },
+        { "ref": "src/extra.css", "change": "changed", "note": "The handshake now sits inside the draw's title instead of pushing the board down, and the rule that shrank the board on a draw is gone." },
+        { "ref": "tests/e2e/screens.py", "change": "changed", "note": "Now fails if the board's top differs between the play screen and any end-of-game screen, in each language." },
+        { "ref": "tests/e2e/flows.py", "change": "changed", "note": "Checks the board's position and size before and after a win, a draw and a loss." }
+      ]
+    },
+    {
+      "title": "No taps while the coach thinks",
+      "request": "It's clickable while the coach thinks; it shouldn't be",
+      "summary": "During the coach's short wait every empty square is switched off, so it neither presses nor takes a tap, and the squares come back as soon as the coach has moved.",
+      "items": [
+        { "ref": "src/ui.js", "change": "changed", "note": "Switches the empty squares off for the coach's turn and back on after its move, and gives a keyboard player their square back." },
+        { "ref": "src/extra.css", "change": "changed", "note": "A switched-off square no longer shows the press effect or the pointing hand." },
+        { "ref": "tests/e2e/flows.py", "change": "changed", "note": "Checks every empty square is off right after the child's move and on again once the coach has played." }
+      ]
+    }
+  ]
+}

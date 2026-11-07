@@ -1,0 +1,12 @@
+{
+  "files": {
+    "src/main.js": {
+      "name": "Start-up",
+      "description": "Starts the app in the right language with the saved setup and game, and wires up Start over (two taps) and the light and dark switch."
+    },
+    "src/ui.js": {
+      "name": "Screens and game turns",
+      "description": "Draws the welcome, play and end-of-game screens, plays the coach's turn after a short wait, shows Help me's ring, saves the game on the phone and drops the confetti."
+    }
+  }
+}

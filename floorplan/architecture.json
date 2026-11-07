@@ -1,0 +1,158 @@
+{
+  "$schema": "floorplan/architecture@1",
+  "project": {
+    "name": "Tic-Tac-Toe Coach",
+    "summary": "A one-page web app that plays tic-tac-toe with a child and teaches them to win: a coach at three strengths, a Help me button that rings the best square and says why, and two children on one phone. It speaks English, Hebrew and Polish, keeps everything on the phone, and is published on GitHub Pages.",
+    "entrypoints": ["src/main.js", "index.html"]
+  },
+  "audience": "everyone",
+  "nodes": [
+    {
+      "id": "app",
+      "label": "The app",
+      "kind": "ui",
+      "summary": "The pieces of the app, kept as separate files while you work on them and glued into one page for publishing.",
+      "paths": ["src/**"]
+    },
+    {
+      "id": "app.coach",
+      "parent": "app",
+      "label": "The coach's brains",
+      "kind": "library",
+      "summary": "Knows the game inside out: who has won, the best square from any position, the true reason for a hint, how each of the three coaches plays, and why the child lost.",
+      "paths": ["src/game.js"]
+    },
+    {
+      "id": "app.words",
+      "parent": "app",
+      "label": "Words in three languages",
+      "kind": "library",
+      "summary": "Every sentence the child reads, in English, Hebrew and Polish, side by side, with the rule for plurals.",
+      "paths": ["src/strings.js"]
+    },
+    {
+      "id": "app.screens",
+      "parent": "app",
+      "label": "Screens",
+      "kind": "feature",
+      "summary": "Draws the welcome, play and end-of-game screens, runs the coach's turn and Help me, saves the game and the setup on the phone, and starts the app.",
+      "paths": ["src/ui.js", "src/main.js"]
+    },
+    {
+      "id": "app.look",
+      "parent": "app",
+      "label": "Look and page skeleton",
+      "kind": "ui",
+      "summary": "The colors, fonts and phone layout in light and dark mode, the grey loss screen, and the page the pieces are poured into.",
+      "paths": ["src/*.css", "src/page.template.html"]
+    },
+    {
+      "id": "build",
+      "label": "Build step",
+      "kind": "script",
+      "summary": "Glues the pieces in src into the single published page, and can check that the page is up to date.",
+      "paths": ["build.py"]
+    },
+    {
+      "id": "page",
+      "label": "Published page",
+      "kind": "ui",
+      "summary": "The whole app in one file, made by the build step and served to phones by GitHub Pages. Never edited by hand.",
+      "paths": ["index.html"]
+    },
+    {
+      "id": "tests",
+      "label": "Tests",
+      "kind": "test",
+      "summary": "Proof that the coach plays and advises correctly, every word exists in every language, and every screen works and fits a small phone in all three languages.",
+      "paths": ["tests/**"]
+    },
+    {
+      "id": "tests.unit",
+      "parent": "tests",
+      "label": "Quick checks",
+      "kind": "test",
+      "summary": "Fast checks run before every commit: the coach against every possible game, every hint's reason, the three levels, the loss line, and every word in every language.",
+      "paths": ["tests/*.js"]
+    },
+    {
+      "id": "tests.browser",
+      "parent": "tests",
+      "label": "Browser tests",
+      "kind": "test",
+      "summary": "Drive the real page in a phone-sized headless browser: whole games in each language, reloads mid-game, blocked storage, a walk over every screen that checks its words and height, and the README's screenshots.",
+      "paths": ["tests/e2e/**"]
+    },
+    {
+      "id": "fonts",
+      "label": "Google Fonts",
+      "kind": "external",
+      "summary": "The two typefaces, Fredoka and Andika, plus Assistant for Hebrew text."
+    },
+    {
+      "id": "pages",
+      "label": "GitHub Pages",
+      "kind": "external",
+      "summary": "Free hosting that publishes the page at maxfokin.github.io/tic-tac-toe from main, once it is turned on for the repo."
+    }
+  ],
+  "edges": [
+    { "from": "app.screens", "to": "app.coach", "kind": "call", "label": "moves and hints", "description": "The screens ask the coach for its move, for the best square when Help me is tapped, and for why the child lost." },
+    { "from": "app.screens", "to": "app.words", "kind": "call", "label": "every word", "description": "Every word on screen is looked up in the words table, in the language the child picked." },
+    { "from": "app", "to": "build", "kind": "data", "label": "pieces", "description": "The build reads the CSS and JavaScript pieces in src, in a fixed order." },
+    { "from": "build", "to": "page", "kind": "call", "label": "writes", "description": "The build pours the pieces into the page template and writes index.html." },
+    { "from": "page", "to": "pages", "kind": "http", "label": "served by", "description": "GitHub Pages serves the committed index.html to phones." },
+    { "from": "tests.unit", "to": "app.coach", "kind": "import", "label": "loads the source", "description": "The test loader reads the source files straight from src and runs them in Node, with no browser." },
+    { "from": "tests.unit", "to": "app.words", "kind": "import", "label": "loads the source" },
+    { "from": "tests.browser", "to": "page", "kind": "call", "label": "opens the page", "description": "Playwright opens the built index.html in a phone-sized headless Chromium." },
+    { "from": "app.look", "to": "fonts", "kind": "http", "label": "typefaces", "description": "The page template links the typefaces from Google Fonts; phones download only the scripts they render." }
+  ],
+  "annotations": [
+    { "path": "index.html", "note": "Generated by build.py from src. Edit the pieces in src, then rebuild; never edit this file by hand.", "tags": ["generated"] },
+    { "path": "src/strings.js", "note": "The review surface for translations: each key shows its English, Hebrew and Polish together.", "tags": ["hotspot"] },
+    { "path": "src/game.js", "note": "The coach's whole mind, with no screen code: the tests play it against every possible game and check that every hint it gives is true.", "tags": ["hotspot"] }
+  ],
+  "flows": [
+    {
+      "id": "game",
+      "title": "A game against the coach",
+      "description": "From the welcome screen to the end of a game.",
+      "steps": [
+        { "node": "app.screens", "note": "The child picks Single player, the coach's level, X or O and who starts, taps Play, then taps a square." },
+        { "node": "app.coach", "note": "After a short wait the coach picks its square at the chosen level (Easy slips, Medium always wins and blocks, Hard never loses) and names its reason." },
+        { "node": "app.screens", "note": "The coach's square gets a magenta ring and its one line appears under the board, in the child's language." },
+        { "node": "app.coach", "note": "If the coach won, it looks back over the game for the child's missed win, missed block, or the two ways to win that beat them." },
+        { "node": "app.screens", "note": "The end of the game: confetti for a win, a handshake for a draw, a grey rainy screen for a loss, and Play again." }
+      ]
+    },
+    {
+      "id": "help",
+      "title": "Help me",
+      "description": "How the coach shows the best square and says why.",
+      "steps": [
+        { "node": "app.screens", "note": "The child taps Help me on their turn." },
+        { "node": "app.coach", "note": "Works out every best square, then the first reason that is true of one: win now, block, two ways to win, two in a row, stop their two ways, the middle, a corner, any square, a side." },
+        { "node": "app.screens", "note": "Rings that square in pulsing magenta and puts the reason in the box. The child may still play anywhere." }
+      ]
+    },
+    {
+      "id": "publish",
+      "title": "From a change to the live site",
+      "steps": [
+        { "node": "app", "note": "Edit a piece in src. npm test checks the coach and the words straight from the pieces." },
+        { "node": "build", "note": "python3 build.py glues the pieces into index.html." },
+        { "node": "page", "note": "The browser tests play the built page in three languages; index.html is committed with the sources." },
+        { "node": "pages", "note": "A push to main is live within a minute." }
+      ]
+    }
+  ],
+  "tour": [
+    { "node": "app", "title": "One page, a few pieces", "note": "Tic-Tac-Toe Coach is a single web page for phones. While working on it, it is split into pieces under src: the coach's brains, the words, the screens and the look." },
+    { "node": "app.coach", "title": "The coach's brains", "note": "This piece plays the coach at three strengths, finds the best square from any position and the honest reason for it, and explains a loss." },
+    { "node": "app.words", "title": "Three languages", "note": "Every sentence the child sees lives here in English, Hebrew and Polish. Change a word here, never in the screens." },
+    { "node": "app.screens", "title": "The screens", "note": "The welcome screen, the board with Help me, and the end of a game. The game and the setup are saved on the phone, so a reload lands on the same board." },
+    { "node": "page", "title": "The published page", "note": "The build glues everything into index.html, the file GitHub Pages serves. Never edit it by hand." },
+    { "node": "tests", "title": "Safety net", "note": "Quick checks prove the Hard coach never loses and every hint is true; browser tests play real games in all three languages." },
+    { "node": "src/ui.js", "title": "Where the screens live", "note": "To change what a screen shows, this is the file. The words themselves stay in strings.js." }
+  ]
+}

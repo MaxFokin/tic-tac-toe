@@ -15,18 +15,18 @@ same tooling, the same promises (one file, no server, no account, nothing leaves
 brainstorm with mockups in the cmux browser, a design and a 13-task plan, then the build, one fresh
 subagent per task with a reviewer after each, on branch `build`.
 
-This file is the project's memory. Everything in it is current and was verified on 2026-11-06.
+This file is the project's memory. Everything in it is current and was verified on 2026-11-07.
 When a fact here changes, change it here in the same commit.
 
 ## Live
 
-https://maxfokin.github.io/tic-tac-toe/ once it is live: GitHub Pages is not on yet. Going live is
-the last step of the plan (Task 13, Step 4), with Max: merge `build` into `main`, push, Max turns
-on Pages. Until then the URL gives a 404 and the README's "Open the app" link leads there.
+https://maxfokin.github.io/tic-tac-toe/ once GitHub Pages is on. `main` is pushed (2026-11-07);
+the one step left is Max's: turn on Pages for the repo ("Deploy from a branch", `main`,
+`/ (root)`). Until then the URL gives a 404 and the README's "Open the app" link leads there.
 
 ## Start of every session
 
-1. `git pull` (once `main` is pushed; until then there is nothing to pull), then
+1. `git pull`, then
    `python3 build.py --check` (must say index.html is up to date) and `npm test` (the strings and
    the game logic must pass; there is nothing to install).
 2. If the work touches `ui.js`, `strings.js`, the template or the CSS, also run the browser tests
@@ -86,6 +86,16 @@ on Pages. Until then the URL gives a 404 and the README's "Open the app" link le
   `screenshots.py` (the README's phone screenshots); `fixtures/en-screens.json` (the English text
   snapshot). `fixtures/generated/` is ignored by git and unused so far.
 - `docs/screenshots/` - `welcome.png`, `hint.png`, `win.png` (dark mode), shown in `README.md`.
+- `floorplan/` - a visual map of the codebase made with the Floorplan plugin on 2026-11-07, committed
+  on purpose (Max asked for it) so it travels with the repo; GitHub Pages serves it at
+  https://maxfokin.github.io/tic-tac-toe/floorplan/. `architecture.json`, `descriptions/` and
+  `recent-work.json` are hand-written; `index.html`, `graph.json`, `serve.mjs` and `query.mjs` are
+  generated; `.cache/` stays out of git. Like Cube Coach's, the generated files hold this Mac's
+  folder path. Ask to "update the floorplan" (`/floorplan:floorplan`) after bigger changes, then
+  commit the folder with the change. The plugin writes a `floorplan/.gitignore` that ignores the
+  whole folder; this repo's says `.cache/` instead, so put that back if a rebuild restores it (the
+  tracked files stay tracked either way). `node floorplan/serve.mjs` opens it locally with the Ask
+  bar working.
 - `docs/superpowers/` - the design (`specs/2026-11-06-tic-tac-toe-coach-design.md`) and the plan
   (`plans/2026-11-06-tic-tac-toe-coach.md`).
 - `PLAN.md` - the hand-over from the Cube Coach sessions, kept for history.
@@ -343,12 +353,11 @@ tallest either way: 18 px of room. The board's top is 123 px on the play and don
 
 ## Deployment
 
-- GitHub: `MaxFokin/tic-tac-toe`, public, created by Max on 2026-11-06. `origin/main` holds only
-  GitHub's one-line `README.md` (`1aa55a1`); the local `main` holds the whole build, 23 commits
-  ahead, since the fast-forward merge of branch `build` on 2026-11-07 (the branch is deleted). Not
-  pushed yet: the push is the last step, with Max's say-so.
-- GitHub Pages is not on. The last step (Task 13, Step 4), with Max's say-so: push `main`; Max turns
-  on Pages ("Deploy from a branch", `main`, `/ (root)`); check
+- GitHub: `MaxFokin/tic-tac-toe`, public, created by Max on 2026-11-06. The build was merged into
+  `main` (fast-forward from branch `build`, now deleted) and `main` was pushed on 2026-11-07 with
+  the floorplan, at Max's request. Every push to `main` goes live once Pages is on; ask before
+  pushing unless Max asked for the push in the same conversation.
+- GitHub Pages is not on. Max turns it on ("Deploy from a branch", `main`, `/ (root)`); then check
   https://maxfokin.github.io/tic-tac-toe/ in the cmux browser at a phone viewport; record the date
   here. After that every push to `main` is live within a minute or two. No CI; the tests are the
   gate.
@@ -363,8 +372,8 @@ tallest either way: 18 px of room. The board's top is 123 px on the play and don
 
 ## Known weak points
 
-- The Hebrew and Polish are Claude's drafts and wait for Max's review (Task 13, Step 2). Lines to
-  look at: `drawEasy` says "we" in Hebrew and Polish ("שנינו שיחקנו יפה", "Dobrze nam poszło")
+- Max reviewed the Hebrew and Polish on 2026-11-07 and kept Claude's drafts as they are. Still
+  true of them: `drawEasy` says "we" in Hebrew and Polish ("שנינו שיחקנו יפה", "Dobrze nam poszło")
   where English says "You both played well"; the Hebrew `age10` "גיל 10+" renders as "+10 גיל"
   under right-to-left (fix the words, or isolate the hint); the Help me button's name sits
   unquoted inside `howto2` and `boxStuck` in Hebrew and Polish, so those two must follow if
@@ -467,3 +476,6 @@ Made with Max on 2026-11-07, after testing the build:
   `screens.py --fonts` and the layout table, then this file's nits and history.
 - 2026-11-07: Max tested the build. The board no longer moves when a game ends (decision 14), and
   the squares are disabled while the coach thinks (decision 15).
+- 2026-11-07: Max approved the Hebrew and Polish as drafted; `build` was merged into `main`
+  (fast-forward); the floorplan was drawn and committed (`floorplan/`); `main` was pushed to GitHub.
+  Left with Max: turning on GitHub Pages.

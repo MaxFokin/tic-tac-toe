@@ -1,0 +1,16 @@
+{
+  "files": {
+    "src/base.css": {
+      "name": "Colors, fonts and layout",
+      "description": "Sets the look of every screen: the colors in light and dark mode, the fonts, buttons, the how-to lines, confetti and the small-phone sizes."
+    },
+    "src/extra.css": {
+      "name": "Choices, board and end-of-game look",
+      "description": "Styles the welcome choices, the header's language switch and theme toggle, the credits line, the board and its rings, the coach's box, the handshake and the grey rainy loss screen."
+    },
+    "src/page.template.html": {
+      "name": "Page skeleton",
+      "description": "The empty page the pieces are poured into: the title, icon and fonts, the saved theme, the header, the panel and the credits line."
+    }
+  }
+}

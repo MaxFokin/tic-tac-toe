@@ -1,0 +1,20 @@
+{
+  "files": {
+    "tests/game.test.js": {
+      "name": "Coach tests",
+      "description": "Plays the Hard coach against every possible game, checks every hint's reason is true and in the right order, and tests the levels and the loss line."
+    },
+    "tests/load.js": {
+      "name": "Test loader",
+      "description": "Reads the coach's brains and the words straight from src and runs them so the quick checks can call them without a browser."
+    },
+    "tests/run.js": {
+      "name": "Run all quick checks",
+      "description": "Runs the words checks and the coach checks one after the other; this is what npm test calls."
+    },
+    "tests/strings.test.js": {
+      "name": "Words tests",
+      "description": "Checks every sentence exists in all three languages with the same placeholders, well-formed plurals, and no shouting or em dashes."
+    }
+  }
+}

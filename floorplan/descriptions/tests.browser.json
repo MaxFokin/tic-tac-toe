@@ -1,0 +1,16 @@
+{
+  "files": {
+    "tests/e2e/flows.py": {
+      "name": "Game flow tests",
+      "description": "Plays real games in a phone-sized browser in every language: Help me against Hard, two players, reloads mid-game, the coach's wait, the loss screen, keyboard use and blocked storage."
+    },
+    "tests/e2e/screens.py": {
+      "name": "Screen walk",
+      "description": "Walks the eight screens in one language, comparing English words with the snapshot, checking no foreign words remain, each screen fits a small phone and the board never moves."
+    },
+    "tests/e2e/screenshots.py": {
+      "name": "README screenshots",
+      "description": "Takes the three phone pictures the README shows: the welcome screen, a hint on the first move and a two-player win in the dark."
+    }
+  }
+}

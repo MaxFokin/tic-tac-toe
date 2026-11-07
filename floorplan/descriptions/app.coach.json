@@ -1,0 +1,8 @@
+{
+  "files": {
+    "src/game.js": {
+      "name": "The coach's brains",
+      "description": "Finds who has won, the best square from any position and the true reason for it, plays the Easy, Medium and Hard coaches, and says why a game was lost."
+    }
+  }
+}
