@@ -26,7 +26,7 @@ on Pages. Until then the URL gives a 404 and the README's "Open the app" link le
 
 ## Start of every session
 
-1. `git pull` (once `main` is live; branch `build` has no upstream until the merge), then
+1. `git pull` (once `main` is pushed; until then there is nothing to pull), then
    `python3 build.py --check` (must say index.html is up to date) and `npm test` (the strings and
    the game logic must pass; there is nothing to install).
 2. If the work touches `ui.js`, `strings.js`, the template or the CSS, also run the browser tests
@@ -344,9 +344,9 @@ tallest either way: 18 px of room. The board's top is 123 px on the play and don
 ## Deployment
 
 - GitHub: `MaxFokin/tic-tac-toe`, public, created by Max on 2026-11-06. `origin/main` holds only
-  GitHub's one-line `README.md` (`1aa55a1`); the local `main` is one commit ahead (`0554c59`, the
-  hand-over, design and plan). The build is on the local branch `build`, not pushed, merged into
-  `main` when Max says so.
+  GitHub's one-line `README.md` (`1aa55a1`); the local `main` holds the whole build, 23 commits
+  ahead, since the fast-forward merge of branch `build` on 2026-11-07 (the branch is deleted). Not
+  pushed yet: the push is the last step, with Max's say-so.
 - GitHub Pages is not on. The last step (Task 13, Step 4), with Max's say-so: push `main`; Max turns
   on Pages ("Deploy from a branch", `main`, `/ (root)`); check
   https://maxfokin.github.io/tic-tac-toe/ in the cmux browser at a phone viewport; record the date
