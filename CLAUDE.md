@@ -113,8 +113,9 @@ assembled. Function declarations are hoisted inside the IIFE, so `ui.js` may cal
 `result` (`{ winner, line }` at the end). `go(screen)` saves and renders. `render()` clears the
 coach's timer, sets `data-screen` on `#app`, drops `data-mood`, refreshes the chrome (the language
 switch and the theme toggle's label) and draws the screen. It then puts the focus back on the
-control that had it (found by its id or its one `data-*` attribute; a disabled one is skipped) and
-puts the old `#box` node back with the new line, so the box, the only `aria-live` region, keeps its
+control that had it (found by its id or its one `data-*` attribute; a disabled one is skipped:
+a square disabled while the coach thinks is held in `heldFocus` and gets the focus back on the
+redraw after the coach's move, if the focus is still on the page) and puts the old `#box` node back with the new line, so the box, the only `aria-live` region, keeps its
 node and a screen reader reads each new line and nothing else.
 
 The welcome screen's four choices are saved under `ttt-coach-setup` the moment one changes;
@@ -134,8 +135,9 @@ stay. These keys must never collide with Cube Coach's `cube-coach-*`: both apps 
 Play (`startGame`): in 2 players X starts; in single player the starter follows Who starts (Random
 is drawn each game). The box opens with "You start!" or "The coach starts." in a Random game,
 "Stuck? Tap Help me." otherwise. A tap on an empty square on your turn places the mark (the `pop`
-animation). On the coach's turn the title is "The coach’s turn", Help me is disabled, and the coach
-waits 700 ms (`COACH_WAIT`) before it plays, so its move is seen as a move; its square keeps a
+animation). On the coach's turn the title is "The coach’s turn", Help me and every square are
+disabled (`boardHtml`'s `off`: no press effect, the normal cursor; `tapCell` still ignores a tap
+then), and the coach waits 700 ms (`COACH_WAIT`) before it plays, so its move is seen as a move; its square keeps a
 magenta ring until the child's next tap and the box says its line. Help me runs `advise` for
 whoever's turn it is, rings the square in pulsing magenta (`flag`) and puts the reason in the box;
 any tap takes the ring away, and there is no count. In 2 players the box goes back to "Stuck? Tap
@@ -302,7 +304,8 @@ Facts the tests guarantee:
   Hebrew or Polish opens in it, any other in English, nothing is saved until a tap, and a tapped
   choice beats the phone; Hard answers a corner with the middle, ringed, "I took the middle.", and a
   reload keeps the board and the turn and lets the coach move on its turn; a taken square and a tap
-  during the coach's wait are ignored; a Coach-first game shows "The coach’s turn" with Help me
+  during the coach's wait are ignored, every empty square is disabled during the wait and none is
+  after the coach's move; a Coach-first game shows "The coach’s turn" with Help me
   disabled, then the coach's line and "Your turn"; Random gives both "You start!" and "The coach
   starts." in twelve games; a malformed record, or one whose history does not replay, lands on
   welcome; a saved hint line on the coach's turn comes back with no ring; a loss (X on 0, 1, 3 against Hard) keeps the board's play-screen top and width and shows "Oh no…", the grey body, the cloud, the
@@ -376,6 +379,8 @@ tallest either way: 18 px of room. The board's top is 123 px on the play and don
   coach's 700 ms wait, until the coach's line replaces it. The spec is silent; for Max to notice.
 - Every choice and move redraws the panel; `render()` puts the focus back, but the last move of a
   game lands on the done screen, whose squares are disabled, so the focus falls to the page there.
+  During the coach's 700 ms wait the squares are disabled too, so the focus sits on the page until
+  the coach has moved.
   The title ("Your turn", "The coach’s turn") is not live, only the box. The new `cellHint` label
   is a draft in all three languages, for Max's review. The pressed tile keeps its magenta shadow
   while pressed.
@@ -429,6 +434,8 @@ Made with Max on 2026-11-07, after testing the build:
     above it ("You are X", or an empty line in 2 players) and the board keeps its size; the
     handshake sits in the title line ("It’s a draw! 🤝") instead of between the title and a shrunk
     board. The rain cloud moved down with the board.
+15. The squares are disabled while the coach thinks (as on the done screen), so they neither press
+    nor take the focus; they come back when the coach has moved.
 
 ## History
 
@@ -458,4 +465,5 @@ Made with Max on 2026-11-07, after testing the build:
   the hint ring on reload, `bf8fe47` the focus, the live box, the hint's label and Play again,
   `dd1ec0e` the tests (the board's direction, the hint's order, the loss line), `84cce12`
   `screens.py --fonts` and the layout table, then this file's nits and history.
-- 2026-11-07: Max tested the build. The board no longer moves when a game ends (decision 14).
+- 2026-11-07: Max tested the build. The board no longer moves when a game ends (decision 14), and
+  the squares are disabled while the coach thinks (decision 15).

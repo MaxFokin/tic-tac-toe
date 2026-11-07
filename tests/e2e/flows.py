@@ -212,9 +212,13 @@ async def taken_and_busy(browser):
     await tap_cell(page, 0, 1000)
     await tap_cell(page, 0)
     assert await count(page, '.cell.x') == 1 and await count(page, '.cell.o') == 1, 'a taken square ignores the tap'
-    await page.tap('.cell[data-i="8"]'); await page.tap('.cell[data-i="6"]'); await page.wait_for_timeout(1000)
+    disabled = "[...document.querySelectorAll('.cell')].filter((c) => !/\\b[xo]\\b/.test(c.className)).map((c) => c.disabled)"
+    await page.tap('.cell[data-i="8"]')
+    assert all(await page.evaluate(disabled)), 'every empty square is disabled while the coach thinks'
+    await page.tap('.cell[data-i="6"]', force=True); await page.wait_for_timeout(1000)  # force: a disabled square is still tapped
     assert await count(page, '.cell.x') == 2 and await count(page, '.cell.o') == 2, 'a tap during the coach’s wait is ignored'
     assert await count(page, '.cell.x[data-i="6"]') == 0
+    assert await count(page, '.cell:disabled') == 0, 'the squares come back when the coach has moved'
     assert not errors, errors
     print('taken and busy: ok')
     await page.context.close()

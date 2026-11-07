@@ -224,7 +224,8 @@ h1 b.o, .sub b.o { color: var(--o); }
   display: grid; place-items: center; touch-action: manipulation; transition: transform .08s ease;
   box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .14), inset 0 3px 0 rgba(255, 255, 255, .3);
 }
-.cell:active { transform: scale(.95); }
+.cell:active:not(:disabled) { transform: scale(.95); }
+.cell:disabled { cursor: default; } /* while the coach thinks, and when the game is over */
 .cell svg { width: 64%; height: 64%; fill: none; stroke-width: 13; stroke-linecap: round; }
 .cell.x svg { stroke: var(--x); }
 .cell.o svg { stroke: var(--o); }
@@ -239,7 +240,6 @@ h1 b.o, .sub b.o { color: var(--o); }
 
 /* Done: the handshake in the title on a draw, the grey day on a loss. The board stays where it
    was on the play screen. */
-.cell:disabled { cursor: default; }
 .handshake { display: inline-block; font-size: 1em; line-height: 1; margin: -.2em 0; /* counts as .6em, inside the title's line */ vertical-align: middle; transform-origin: 50% 60%; animation: shake .7s ease-in-out 3; }
 @keyframes shake { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
 /* The grey day reaches the body, outside #app, so the tokens are set on the root. */
@@ -898,15 +898,19 @@ function go(screen) {
   window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
 }
 
+// A square the redraw disabled (the coach is thinking) gets the focus back on the redraw that
+// enables it, unless the focus went somewhere else in between.
+let heldFocus = null;
 function render(animate) {
   clearTimeout(coachTimer);
-  const focused = focusSel(), box = $('#box');
+  const focused = focusSel() || (document.activeElement === document.body ? heldFocus : null), box = $('#box');
   appEl.dataset.screen = app.screen;
   delete appEl.dataset.mood; // the grey day is the loss screen's only
   refreshChrome();
   ({ welcome: screenWelcome, play: screenPlay, done: screenDone }[app.screen] || screenWelcome)(animate);
   keepBox(box);
   const el = focused && panelEl.querySelector(focused);
+  heldFocus = el && el.disabled && app.screen === 'play' ? focused : null;
   if (el && !el.disabled) el.focus({ preventScroll: true });
 }
 // The focused control, found again after the redraw, so keyboard and screen reader users keep
@@ -1046,12 +1050,13 @@ const MARK_SVG = {
 const markHtml = (mark) => `<b class="${mark.toLowerCase()}">${mark}</b>`;
 
 // `ring(i)` is the extra classes of square i; the square of the latest move pops when `animate`.
-function boardHtml(ring, animate) {
+// `off` disables every square: while the coach thinks, and when the game is over.
+function boardHtml(ring, animate, off) {
   const lastMove = app.history.length ? app.history[app.history.length - 1].square : -1;
   return `<div class="board">${app.board.map((m, i) => {
     const cls = ['cell', m.toLowerCase(), ring(i), animate && i === lastMove ? 'pop' : ''].filter(Boolean).join(' ');
     const label = m ? t('cellMark', { n: i + 1, mark: m }) : t(i === app.hint ? 'cellHint' : 'cellEmpty', { n: i + 1 });
-    return `<button class="${cls}" type="button" data-i="${i}" aria-label="${label}">${MARK_SVG[m] || ''}</button>`;
+    return `<button class="${cls}" type="button" data-i="${i}" aria-label="${label}"${off ? ' disabled' : ''}>${MARK_SVG[m] || ''}</button>`;
   }).join('')}</div>`;
 }
 const boxHtml = () => `<div class="box${/^(hint|coach)/.test(app.line.key) ? ' coach' : ''}" id="box" aria-live="polite">${t(app.line.key, app.line.vars)}</div>`;
@@ -1062,7 +1067,7 @@ function screenPlay(animate) {
   const sub = single ? t('youAreMark', { mark: markHtml(app.game.mark) }) : t('tapSquare');
   const ring = (i) => (i === app.hint ? 'hint' : i === app.last ? 'last' : '');
   panelEl.innerHTML = `<h1 id="title">${title}</h1><div class="sub" id="sub">${sub}</div>
-    ${boardHtml(ring, animate)}${boxHtml()}
+    ${boardHtml(ring, animate, isCoachTurn())}${boxHtml()}
     <div class="actions">${btn('help', t('helpMe'), 'small')}</div>`;
   panelEl.querySelectorAll('.cell').forEach((b) => b.addEventListener('click', () => tapCell(+b.dataset.i)));
   on('help', askHelp);
@@ -1085,9 +1090,8 @@ function screenDone() {
   if (lost) appEl.dataset.mood = 'sad';
   panelEl.innerHTML = `<h1 id="title">${title}</h1><div class="sub" id="sub">${single ? t('youAreMark', { mark: markHtml(child) }) : ''}</div>
     ${lost ? '<div class="cloud" aria-hidden="true">🌧️</div>' : ''}
-    ${boardHtml(ring, false)}<div class="box coach" id="box" aria-live="polite">${t(say)}</div>
+    ${boardHtml(ring, false, true)}<div class="box coach" id="box" aria-live="polite">${t(say)}</div>
     <div class="actions">${btn('again', t('playAgain'), 'primary small')}</div>`;
-  panelEl.querySelectorAll('.cell').forEach((b) => { b.disabled = true; });
   on('again', () => startGame(app.game));
 }
 

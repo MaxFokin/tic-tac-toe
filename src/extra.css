@@ -84,7 +84,8 @@ h1 b.o, .sub b.o { color: var(--o); }
   display: grid; place-items: center; touch-action: manipulation; transition: transform .08s ease;
   box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .14), inset 0 3px 0 rgba(255, 255, 255, .3);
 }
-.cell:active { transform: scale(.95); }
+.cell:active:not(:disabled) { transform: scale(.95); }
+.cell:disabled { cursor: default; } /* while the coach thinks, and when the game is over */
 .cell svg { width: 64%; height: 64%; fill: none; stroke-width: 13; stroke-linecap: round; }
 .cell.x svg { stroke: var(--x); }
 .cell.o svg { stroke: var(--o); }
@@ -99,7 +100,6 @@ h1 b.o, .sub b.o { color: var(--o); }
 
 /* Done: the handshake in the title on a draw, the grey day on a loss. The board stays where it
    was on the play screen. */
-.cell:disabled { cursor: default; }
 .handshake { display: inline-block; font-size: 1em; line-height: 1; margin: -.2em 0; /* counts as .6em, inside the title's line */ vertical-align: middle; transform-origin: 50% 60%; animation: shake .7s ease-in-out 3; }
 @keyframes shake { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
 /* The grey day reaches the body, outside #app, so the tokens are set on the root. */
