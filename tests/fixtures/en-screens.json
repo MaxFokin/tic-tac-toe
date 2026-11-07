@@ -24,11 +24,11 @@
   "height": 640
  },
  "done draw": {
-  "text": "It’s a draw!\n🤝\nNobody beats the Hard coach. A draw is as good as it gets!\nPlay again\nStart over",
+  "text": "It’s a draw! 🤝\nYou are X\nNobody beats the Hard coach. A draw is as good as it gets!\nPlay again\nStart over",
   "height": 640
  },
  "done loss": {
-  "text": "Oh no…\n🌧️\nYou could have blocked me. Next time, look at my two in a row.\nPlay again\nStart over",
+  "text": "Oh no…\nYou are X\n🌧️\nYou could have blocked me. Next time, look at my two in a row.\nPlay again\nStart over",
   "height": 640
  }
 }

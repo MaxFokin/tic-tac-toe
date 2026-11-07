@@ -1,7 +1,8 @@
 """Walks every screen in one language and records its text and page height at 360x640.
 English: the text of every screen must equal tests/fixtures/en-screens.json (the proof that
 English copy never changes). Hebrew: no Latin word may be left. Polish: no English word may be
-left. Every language: every screen fits 640 tall with the credits line, no scrolling. Each line
+left. Every language: every screen fits 640 tall with the credits line, no scrolling, and the
+board's top on the three done screens is the play screen's (the board never moves). Each line
 prints the page's scrollHeight (never under 640, so it only catches overflow) and the content's
 real height (#app without its min-height, credits line included), which must also fit.
     python3 tests/e2e/screens.py en --write    # refresh the snapshot, only after a copy change Max asked for
@@ -54,7 +55,8 @@ async def walk(browser, lang, fonts):
         h = await page.evaluate('[document.documentElement.scrollHeight, document.documentElement.scrollWidth, window.innerWidth]')
         content = await page.evaluate(CONTENT)
         credits = await page.evaluate("(() => { const f = document.querySelector('.credits'); return !!f && getComputedStyle(f).display !== 'none' && f.querySelectorAll('a').length === 3; })()")
-        shots.append((label, text, h[0], h[1] <= VW and h[2] == VW, credits, content))  # content wider than the phone makes mobile Chromium zoom out
+        board = await page.evaluate("(() => { const b = document.querySelector('.board'); return b && Math.round(b.getBoundingClientRect().top + scrollY); })()")
+        shots.append((label, text, h[0], h[1] <= VW and h[2] == VW, credits, content, board))  # content wider than the phone makes mobile Chromium zoom out
     page, errors = await new_page(browser, lang, fonts)
     await shot(page, 'welcome')
     await tap(page, '#mode-two'); await shot(page, 'welcome 2 players')
@@ -91,8 +93,10 @@ async def main(lang, write, fonts):
         await browser.close()
     snap = json.loads(SNAP.read_text(encoding='utf-8')) if SNAP.exists() else {}
     bad = 0
-    for label, text, height, fits_wide, credits, content in shots:
+    tops = {s[0]: s[6] for s in shots if s[0] == 'play start' or s[0].startswith('done')}
+    for label, text, height, fits_wide, credits, content, board in shots:
         problems = []
+        if label in tops and board != tops['play start']: problems.append(f'board top {board}, {tops["play start"]} on play start')
         if height > LIMIT: problems.append(f'height {height} over {LIMIT}')
         if content > LIMIT: problems.append(f'content {content} over {LIMIT}')
         if not fits_wide: problems.append('wider than the screen')
@@ -108,7 +112,7 @@ async def main(lang, write, fonts):
         print('   FAIL page errors:', errors); bad += 1
     if write:
         assert lang == 'en', 'only the English snapshot is written'
-        SNAP.write_text(json.dumps({l: {'text': t, 'height': h} for l, t, h, _, _, _ in shots}, ensure_ascii=False, indent=1), encoding='utf-8')
+        SNAP.write_text(json.dumps({l: {'text': t, 'height': h} for l, t, h, *_ in shots}, ensure_ascii=False, indent=1), encoding='utf-8')
         print('snapshot written:', SNAP.relative_to(ROOT))
     print(f'{lang}{" with the web fonts" if fonts else ""}: {len(shots)} screens, {bad} problems')
     sys.exit(1 if bad else 0)

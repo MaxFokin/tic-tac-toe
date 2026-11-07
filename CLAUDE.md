@@ -184,22 +184,27 @@ win). The lines are `lossMissedWin`, `lossMissedBlock`, `lossFork`, `lossGeneral
 
 ### The end of a game (screenDone)
 
-The board stays as it ended, the winning three ringed in the winner's color, every square disabled;
-under it the box (always with the magenta border, as in the mockups) and a small yellow Play again,
-which starts a new game from `app.game`, the setup of the game just played (not `app.setup`, which
-another tab may have changed).
+The board stays as it ended, the winning three ringed in the winner's color, every square disabled,
+and where it was on the play screen, at the same size (Max, 2026-11-07): above it the title and
+`#sub`, which keeps saying "You are X" in single player and is empty in 2 players (`.sub` has a
+`min-height` of its line, so an empty one holds the room). Under it the box (always with the
+magenta border, as in the mockups) and a small yellow Play again, which starts a new game from
+`app.game`, the setup of the game just played (not `app.setup`, which another tab may have
+changed).
 - A win (the child's, or either mark's in 2 players): "You win!" / "X wins!" / "O wins!", "Three in
   a row. Well done!", and confetti from `finish()`, so a reload of the done screen has none: 90 flat
   pieces (a rounded square, an X, an O in turn), each in a random sticker color, falling 2.2 to
   3.8 s, removed after 4.6 s; none under reduced motion.
-- A draw: "It’s a draw!" with a 64 px handshake (🤝) shaking three times, then still (still from
-  the start under reduced motion); the board under it shrinks to `min(64vw, 230px)`. The line is
+- A draw: "It’s a draw! 🤝", the handshake in the title line (`span.handshake`, 1em of the title,
+  `vertical-align: middle`, with `margin: -.2em 0` so it counts as .6em and never makes the line
+  taller), shaking three times, then still (still from the start under reduced motion). The line is
   `drawHard` against Hard, `drawEasy` against Easy or Medium, `drawTwo` in 2 players.
 - A loss (single player only; in 2 players there is no loss): "Oh no…" and the grey day.
   `data-mood="sad"` on `#app`; the grey tokens (desk, paper, ink, soft ink, light and dark) hang on
   `:root:has(#app[data-mood="sad"])` so the body greys too; the board is desaturated and faded, a
-  rain cloud (🌧️) drifts above it (still under reduced motion), the child's marks droop (tilted
-  and faded), and the coach's three are ringed in its color. The line is the loss line.
+  rain cloud (🌧️) drifts over its top edge (`top: 50px` of the panel, below the sub line; still
+  under reduced motion), the child's marks droop (tilted and faded), and the coach's three are
+  ringed in its color. The line is the loss line.
   `render()` drops the mood, so Play again or Start over brings the color back.
 
 ### Languages
@@ -284,10 +289,12 @@ Facts the tests guarantee:
   switch and the toggle share the header's right group, no Start over on welcome, the credits line
   (three links, the same words, order, font and direction, inside the screen on welcome); a
   2-player game where Help me shows O the block with the `2` line, a reload keeps the ring and the
-  line, any tap takes the ring away, X wins with three ringed squares and confetti, a reload keeps
+  line, any tap takes the ring away, X wins with three ringed squares and confetti and the board
+  keeps the top and width it had on the play screen, a reload keeps
   the done screen, and Play again starts the game just played even after the saved setup changed
   under it; following Help me against Hard, as X starting and as O with the coach starting, three games each, always
-  ends in the handshake, never the grey day, and Play again starts on an empty board.
+  ends in the handshake (in the title: "It’s a draw! 🤝"), never the grey day, the board keeps its
+  play-screen top and width, and Play again starts on an empty board.
 - Browser, once: the welcome defaults; 2 players hides the coach rows and shows three how-to lines;
   the setup survives a reload and Start over; both welcome states fit 360x640; the toggle follows
   the phone until tapped, survives a reload, and its label follows the language; the language,
@@ -298,7 +305,7 @@ Facts the tests guarantee:
   during the coach's wait are ignored; a Coach-first game shows "The coach’s turn" with Help me
   disabled, then the coach's line and "Your turn"; Random gives both "You start!" and "The coach
   starts." in twelve games; a malformed record, or one whose history does not replay, lands on
-  welcome; a saved hint line on the coach's turn comes back with no ring; a loss (X on 0, 1, 3 against Hard) shows "Oh no…", the grey body, the cloud, the
+  welcome; a saved hint line on the coach's turn comes back with no ring; a loss (X on 0, 1, 3 against Hard) keeps the board's play-screen top and width and shows "Oh no…", the grey body, the cloud, the
   coach's three ringed and the missed-block line, and Start over brings the color back; under
   reduced motion there is no confetti and the handshake stands still; a win throws 90 pieces in more
   than one color; with the keyboard, a welcome choice, a square (through the coach's move) and
@@ -307,9 +314,10 @@ Facts the tests guarantee:
 - The walks (`screens.py`): the English text of the eight screens equals the snapshot; Hebrew
   screens hold no Latin word but the allowed names and X and O; Polish screens hold no English word
   from the snapshot; every screen is at most 640 tall and 360 wide at 360x640, and so is its
-  content's real height, with the credits line and no page error.
+  content's real height, with the credits line and no page error; the board's top on the three done
+  screens equals its top on `play start` (the board never moves).
 
-Layout at 360x640, measured on 2026-11-06 with `screens.py <lang> --fonts`. The walk prints two
+Layout at 360x640, measured on 2026-11-07 with `screens.py <lang> --fonts`. The walk prints two
 numbers per screen. The first is `scrollHeight`, which never reads under the 640 viewport, so it is
 640 on every screen in every language and only catches overflow. The second, in this table, is the
 content's real height (`#app` without its `min-height`, credits line included), with the web fonts;
@@ -322,13 +330,13 @@ the walk fails if it is over 640 too:
 | play start           | 575 | 575 | 599 |
 | play hint            | 599 | 575 | 575 |
 | play after coach     | 575 | 575 | 575 |
-| done win             | 551 | 551 | 551 |
-| done draw            | 622 | 622 | 622 |
-| done loss            | 574 | 574 | 597 |
+| done win             | 575 | 575 | 575 |
+| done draw            | 599 | 599 | 599 |
+| done loss            | 599 | 599 | 622 |
 
 The 23-24 px steps are the box's line wrapping to two lines. With the fallback fonts the default
-walks use, every screen is within 23 px of these (English welcome 607), and the draw is the tallest
-either way: 18 px of room.
+walks use, every screen is within 23 px of these (English welcome 607), and the Polish loss is the
+tallest either way: 18 px of room. The board's top is 123 px on the play and done screens alike.
 
 ## Deployment
 
@@ -415,6 +423,13 @@ Made on 2026-11-06 after the final review of the build:
 13. The app runs wherever Cube Coach runs: no `Object.hasOwn`, no `?.`, an explicit board height.
     Only the grey mood needs `:has()`.
 
+Made with Max on 2026-11-07, after testing the build:
+
+14. The board never moves between play and done: the done screen keeps the title and the sub line
+    above it ("You are X", or an empty line in 2 players) and the board keeps its size; the
+    handshake sits in the title line ("It’s a draw! 🤝") instead of between the title and a shrunk
+    board. The rain cloud moved down with the board.
+
 ## History
 
 - 2026-11-04 to 2026-11-06: `PLAN.md` written at the end of the Cube Coach sessions, before anything
@@ -443,3 +458,4 @@ Made on 2026-11-06 after the final review of the build:
   the hint ring on reload, `bf8fe47` the focus, the live box, the hint's label and Play again,
   `dd1ec0e` the tests (the board's direction, the hint's order, the loss line), `84cce12`
   `screens.py --fonts` and the layout table, then this file's nits and history.
+- 2026-11-07: Max tested the build. The board no longer moves when a game ends (decision 14).

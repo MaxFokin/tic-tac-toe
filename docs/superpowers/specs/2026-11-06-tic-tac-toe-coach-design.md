@@ -152,11 +152,12 @@ with the same setup. Start over in the header goes to welcome.
 - **A win for the child** (single player), or for either mark (2 players): "You win!" / "X wins!" /
   "O wins!". Confetti falls like Cube Coach's for about three seconds: flat rounded squares, X's
   and O's, each piece in a random one of the six sticker colors. Box: "Three in a row. Well done!"
-- **A draw:** "It's a draw!" with a big handshake emoji between the title and the board, shaking
+- **A draw:** "It's a draw!" with a handshake emoji, shaking
   a few times then still (still from the start under reduced motion). Box: against the Hard coach
   "Nobody beats the Hard coach. A draw is as good as it gets!"; against Easy or Medium "You both
-  played well. Shake hands!"; in 2 players "Nobody wins this one. Shake hands!". This screen is the
-  tallest; the builder shrinks the board or the emoji until it fits 640 px.
+  played well. Shake hands!"; in 2 players "Nobody wins this one. Shake hands!". On 2026-11-07 Max
+  decided the board never moves between play and done (the done screen keeps the play screen's
+  title and sub line, the board its size) and the handshake sits in the title line.
 - **A loss** (single player only): "Oh no…". The screen turns grey: a muted set of the color tokens
   (desk, paper, ink, soft ink; light and dark variants), the board desaturated and faded, a rain
   cloud emoji drifting slowly above the board (still under reduced motion), and the child's marks

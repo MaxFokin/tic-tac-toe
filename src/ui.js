@@ -301,20 +301,21 @@ function screenPlay(animate) {
 }
 
 // The end of a game: the title, the board as it ended with the winning three ringed, the coach's
-// line and Play again. A draw gets the handshake; a loss for the child the grey day: the colors
+// line and Play again. The title and the sub line take the play screen's room, so the board never
+// moves. A draw gets the handshake in the title; a loss for the child the grey day: the colors
 // fade, a rain cloud drifts over the board and the child's marks droop.
 function screenDone() {
   const w = app.result.winner, line = app.result.line || [];
   const single = app.game.mode === 'single', child = app.game.mark;
   const lost = single && w && w !== child;
-  const title = !w ? t('drawTitle') : !single ? t('markWins', { mark: markHtml(w) }) : t(lost ? 'lossTitle' : 'youWin');
+  const title = !w ? t('drawTitle') + ' <span class="handshake" aria-hidden="true">🤝</span>' : !single ? t('markWins', { mark: markHtml(w) }) : t(lost ? 'lossTitle' : 'youWin');
   const reason = lost && lossReason(app.history, child);
   const say = !w ? (!single ? 'drawTwo' : app.game.level === 'hard' ? 'drawHard' : 'drawEasy')
     : lost ? 'loss' + reason[0].toUpperCase() + reason.slice(1) : 'winLine';
   const ring = (i) => `${line.includes(i) ? 'win' : ''} ${lost && app.board[i] === child ? 'droop' : ''}`.trim();
   if (lost) appEl.dataset.mood = 'sad';
-  panelEl.innerHTML = `<h1 id="title">${title}</h1>
-    ${!w ? '<div class="handshake" aria-hidden="true">🤝</div>' : ''}${lost ? '<div class="cloud" aria-hidden="true">🌧️</div>' : ''}
+  panelEl.innerHTML = `<h1 id="title">${title}</h1><div class="sub" id="sub">${single ? t('youAreMark', { mark: markHtml(child) }) : ''}</div>
+    ${lost ? '<div class="cloud" aria-hidden="true">🌧️</div>' : ''}
     ${boardHtml(ring, false)}<div class="box coach" id="box" aria-live="polite">${t(say)}</div>
     <div class="actions">${btn('again', t('playAgain'), 'primary small')}</div>`;
   panelEl.querySelectorAll('.cell').forEach((b) => { b.disabled = true; });

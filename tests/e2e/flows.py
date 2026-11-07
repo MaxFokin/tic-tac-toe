@@ -150,6 +150,8 @@ async def text(page, sel): return (await page.text_content(sel)).strip()
 async def tap(page, sel, wait=100):
     await page.tap(sel); await page.wait_for_timeout(wait)
 async def tap_cell(page, i, wait=100): await tap(page, f'.cell[data-i="{i}"]', wait)
+# The board's top and width: the done screen keeps them as they were on the play screen.
+BOARD = "(() => { const r = document.querySelector('.board').getBoundingClientRect(); return [r.top + scrollY, r.width]; })()"
 async def single_hard_x(browser):
     page, errors = await new_page(browser)
     for sel in ('.level[data-level="hard"]', '#play'): await tap(page, sel)
@@ -172,8 +174,10 @@ async def two_player_game(browser, code):
     assert await page.get_attribute('.cell.hint', 'data-i') == '2' and await text(page, '#box') == box, 'a reload keeps the hint ring with its line'
     await tap_cell(page, 4)
     assert await count(page, '.cell.hint') == 0, 'a tap on any square takes the hint away'
+    board = await page.evaluate(BOARD)
     await tap_cell(page, 2)
     assert await page.get_attribute('#app', 'data-screen') == 'done'
+    assert await page.evaluate(BOARD) == board, f'the board does not move on a win: {board} {await page.evaluate(BOARD)}'
     if code == 'en': assert await text(page, '#title') == 'X wins!'
     assert await count(page, '.cell.win') == 3
     assert await count(page, '.confetti') == 1
@@ -265,11 +269,14 @@ async def hint_on_coach_turn(browser):
     await page.context.close()
 
 # Follows Help me on every turn of the child's until the game ends; the coach's turns are waited out.
+# Returns the board's place on the play screen before the child's last move.
 async def follow_hints(page):
+    board = None
     while True:
         await page.wait_for_function("document.getElementById('app').dataset.screen === 'done' || !document.getElementById('help').disabled")
-        if await page.get_attribute('#app', 'data-screen') == 'done': return
+        if await page.get_attribute('#app', 'data-screen') == 'done': return board
         await tap(page, '#help')
+        board = await page.evaluate(BOARD)
         await tap_cell(page, await page.get_attribute('.cell.hint', 'data-i'))
 
 async def hints_never_lose(browser, code):
@@ -278,11 +285,12 @@ async def hints_never_lose(browser, code):
     for mark, first in (('X', 'me'), ('O', 'coach')):
         for sel in (f'.mark[data-mark="{mark}"]', f'.first[data-first="{first}"]', '#play'): await tap(page, sel)
         for game in range(3):
-            await follow_hints(page)
+            board = await follow_hints(page)
             assert await page.is_visible('.handshake'), f'Help me never loses to the Hard coach ({mark}, game {game + 1})'
+            assert await page.evaluate(BOARD) == board, f'the board does not move on a draw: {board} {await page.evaluate(BOARD)}'
             assert await page.get_attribute('#app', 'data-mood') is None
             if code == 'en':
-                assert await text(page, '#title') == 'It’s a draw!'
+                assert await text(page, '#title') == 'It’s a draw! 🤝', 'the handshake sits in the title'
                 assert await text(page, '#box') == 'Nobody beats the Hard coach. A draw is as good as it gets!'
             if game < 2:
                 await tap(page, '#again')
@@ -295,8 +303,11 @@ async def hints_never_lose(browser, code):
 
 async def loss_screen(browser):
     page, errors = await single_hard_x(browser)
-    for i in (0, 1, 3): await tap_cell(page, i, 1000)
+    for i in (0, 1): await tap_cell(page, i, 1000)
+    board = await page.evaluate(BOARD)
+    await tap_cell(page, 3, 1000)
     assert await text(page, '#title') == 'Oh no…'
+    assert await page.evaluate(BOARD) == board, f'the board does not move on a loss: {board} {await page.evaluate(BOARD)}'
     assert await page.get_attribute('#app', 'data-mood') == 'sad'
     assert await page.is_visible('.cloud')
     wins = await page.eval_on_selector_all('.cell.win', 'els => els.map((e) => e.dataset.i + e.className)')
